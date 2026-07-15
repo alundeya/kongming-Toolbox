@@ -4,50 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>随心笔记本_空铭工具箱</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
-html,body{height:100%;overflow:hidden;background:#f7f7f7;color:#333;}
-.app{height:100%;position:relative;overflow:hidden;}
-.page{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;transition:transform 0.24s ease-out;will-change:transform;}
-/* 登录页默认显示，隐藏时彻底移出可视区域+禁止事件 */
-.login-page{
-  z-index:999;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-}
-.login-page.hidden{
-  transform: translateY(-100%);
-  pointer-events:none;
-  opacity:0;
-}
-.list-page{transform:translateX(0);}
-.edit-page{transform:translateX(100%);}
-.page.active{transform:translateX(0);}
-.nav{height:46px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 12px;position:sticky;top:0;z-index:99;}
-.nav-btn{font-size:15px;color:#07c160;padding:6px 10px;background:none;border:none;cursor:pointer;}
-.nav-title{font-size:17px;font-weight:500;}
-.note-list{height:calc(100% - 46px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.note-item{padding:14px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background 0.15s;}
-.note-item:active{background:#f2f2f2;}
-.note-title{font-size:16px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.note-time{font-size:12px;color:#999;}
-.add-btn{position:fixed;right:20px;bottom:24px;width:52px;height:52px;border-radius:50%;background:#07c160;color:#fff;border:none;font-size:28px;box-shadow:0 2px 12px rgba(7,193,96,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.edit-wrap{height:calc(100% - 46px);display:flex;flex-direction:column;}
-.input-title{padding:14px 16px;font-size:18px;border:none;border-bottom:1px solid #eee;outline:none;}
-.text-content{flex:1;padding:14px 16px;font-size:16px;border:none;outline:none;resize:none;}
-.empty-tip{height:100%;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}
-/* 登录页样式 */
-.login-title{font-size:22px;color:#07c160;margin-bottom:32px;}
-.pwd-input{width:100%;padding:12px 14px;border:1px solid #eee;border-radius:8px;font-size:16px;margin-bottom:16px;outline:none;}
-.login-submit{width:100%;padding:12px;background:#07c160;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;}
-.login-submit:active{opacity:0.85;}
-.tip-text{font-size:13px;color:#aaa;margin-top:10px;}
-</style>
+<style>*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}html,body{height:100%;overflow:hidden;background:#f7f7f7;color:#333;}.app{height:100%;position:relative;overflow:hidden;}/* 页面统一规则：左右滑动切换 */.page{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;transition:transform 0.24s ease-out;will-change:transform;}.list-page{transform:translateX(-100%);z-index:10;}.list-page.active{transform:translateX(0);}.edit-page{transform:translateX(100%);z-index:20;}.edit-page.active{transform:translateX(0);}/* 登录页顶层遮罩 */.login-page{ z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; background:#fff; }.login-page.hidden{ transform: translateY(-100vh); pointer-events:none; opacity:0; transition:all 0.3s ease; }.nav{height:46px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 12px;position:sticky;top:0;z-index:99;}.nav-btn{font-size:15px;color:#07c160;padding:6px 10px;background:none;border:none;cursor:pointer;}.nav-title{font-size:17px;font-weight:500;}.note-list{height:calc(100% - 46px);overflow-y:auto;-webkit-overflow-scrolling:touch;}.note-item{padding:14px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background 0.15s;}.note-item:active{background:#f2f2f2;}.note-title{font-size:16px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.note-time{font-size:12px;color:#999;}.add-btn{position:fixed;right:20px;bottom:24px;width:52px;height:52px;border-radius:50%;background:#07c160;color:#fff;border:none;font-size:28px;box-shadow:0 2px 12px rgba(7,193,96,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;}.edit-wrap{height:calc(100% - 46px);display:flex;flex-direction:column;}.input-title{padding:14px 16px;font-size:18px;border:none;border-bottom:1px solid #eee;outline:none;}.text-content{flex:1;padding:14px 16px;font-size:16px;border:none;outline:none;resize:none;}.empty-tip{height:100%;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}/* 登录页样式 */.login-title{font-size:22px;color:#07c160;margin-bottom:32px;}.pwd-input{width:100%;padding:12px 14px;border:1px solid #eee;border-radius:8px;font-size:16px;margin-bottom:16px;outline:none;}.login-submit{width:100%;padding:12px;background:#07c160;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;}.login-submit:active{opacity:0.85;}.tip-text{font-size:13px;color:#aaa;margin-top:10px;}</style>
 </head>
-
 <body>
 <div class="app">
     <!-- 密码登录页面（最高层级） -->
@@ -59,7 +17,7 @@ html,body{height:100%;overflow:hidden;background:#f7f7f7;color:#333;}
     </div>
 
     <!-- 笔记列表页 -->
-    <div class="page list-page active" id="listMainPage">
+    <div class="page list-page" id="listMainPage">
         <div class="nav">
             <button class="nav-btn" id="changePwdBtn">改密码</button>
             <div class="nav-title">笔记</div>
@@ -84,13 +42,15 @@ html,body{height:100%;overflow:hidden;background:#f7f7f7;color:#333;}
 </div>
 
 <script>
-// 简易文本加密器
+// 优化加密工具：兼容中文、emoji、特殊字符，修复解码崩溃
 const SecretTool = {
     key: "noteLock2026secret",
     encrypt(str) {
+        // 先转UTF8 Base64再字符偏移，解决中文乱码崩溃
+        const utf8 = encodeURIComponent(str);
         let s = "";
-        for (let i = 0; i < str.length; i++) {
-            s += String.fromCharCode(str.charCodeAt(i) + this.key.charCodeAt(i % this.key.length));
+        for (let i = 0; i < utf8.length; i++) {
+            s += String.fromCharCode(utf8.charCodeAt(i) + this.key.charCodeAt(i % this.key.length));
         }
         return btoa(s);
     },
@@ -101,7 +61,7 @@ const SecretTool = {
             for (let i = 0; i < s.length; i++) {
                 raw += String.fromCharCode(s.charCodeAt(i) - this.key.charCodeAt(i % this.key.length));
             }
-            return raw;
+            return decodeURIComponent(raw);
         } catch (err) {
             return "";
         }
@@ -167,7 +127,7 @@ function renderList() {
     })
 }
 
-// 打开编辑页
+// 打开编辑页（修复页面重叠BUG：移除list active，给edit加active）
 function openEdit(id = null) {
     currentId = id;
     if (id) {
@@ -193,7 +153,7 @@ function backList() {
 function saveNote() {
     const title = titleInput.value.trim();
     const content = contentInput.value.trim();
-    if (!title && !content) return alert('内容不能为空');
+    if (!title && !content) return alert('标题或内容不能为空');
 
     const notes = getNotes();
     const time = new Date().toLocaleString();
@@ -202,55 +162,73 @@ function saveNote() {
         const index = notes.findIndex(v => v.id === currentId);
         notes[index] = { ...notes[index], title, content, time };
     } else {
-        notes.unshift({
-            id: Date.now().toString(),
-            title,
-            content,
-            time
-        })
+        notes.unshift({ id: Date.now().toString(), title, content, time })
     }
     saveNotes(notes);
     backList();
 }
 
-// 解锁登录【修复核心】
+// 解锁登录
 unlockBtn.onclick = function () {
     const storage = getStorageData();
     const inputPwd = pwdInput.value.trim();
     if (inputPwd === storage.password) {
-        // 添加hidden类：上滑移出屏幕+禁止所有点击事件，彻底不遮挡底层
         loginPage.classList.add("hidden");
-        // 延迟渲染列表，强制浏览器重绘页面
-        setTimeout(()=>{
-            renderList();
-        },50)
+        listPage.classList.add("active");
+        setTimeout(()=> renderList(), 30);
     } else {
         alert("密码错误，无法解锁！");
         pwdInput.value = "";
+        pwdInput.focus();
     }
 }
+// 密码框回车解锁
+pwdInput.onkeydown = e => {
+    if(e.key === 'Enter') unlockBtn.click();
+}
 
-// 修改密码
+// 修改密码（增加二次确认）
 changePwdBtn.onclick = function () {
+    const data = getStorageData();
+    const oldInput = prompt("请输入当前密码：");
+    if(oldInput !== data.password) return alert("原密码输入错误！");
+
     const newPwd = prompt("请输入新密码（至少3位）：");
     if (!newPwd || newPwd.length < 3) {
-        alert("密码太短，至少3个字符");
-        return;
+        return alert("密码太短，至少3个字符");
     }
-    const data = getStorageData();
+    const confirmPwd = prompt("再次输入新密码确认：");
+    if(newPwd !== confirmPwd) return alert("两次密码不一致！");
+
     saveStorageData(newPwd, data.noteList);
-    alert("密码修改成功，下次打开需要新密码！");
+    alert("密码修改成功！刷新页面使用新密码登录");
+}
+
+// 编辑框回车保存快捷操作
+contentInput.onkeydown = e => {
+    if(e.ctrlKey && e.key === 'Enter') saveNote();
 }
 
 // 绑定原有按钮事件
 document.getElementById('addBtn').onclick = () => openEdit();
 document.getElementById('backBtn').onclick = backList;
 document.getElementById('saveBtn').onclick = saveNote;
+
+// 清空全部笔记（双重确认）
 document.getElementById('clearBtn').onclick = () => {
-    if (confirm('确定清空所有笔记？无法恢复')) {
+    const tip1 = confirm('确定清空所有笔记？删除后无法恢复！');
+    if(!tip1) return;
+    const tip2 = confirm('再次确认，所有笔记永久删除？');
+    if(tip2){
         saveNotes([]);
         renderList();
     }
+}
+
+// 页面初始化：默认不显示列表，必须解锁
+window.onload = ()=>{
+    listPage.classList.remove('active');
+    editPage.classList.remove('active');
 }
 </script>
 </body>
