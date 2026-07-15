@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>在线图片压缩工具_空铭工具箱</title>
+<style>
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+body{
+    font-family: system-ui, "Microsoft YaHei", sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    background: #ffffff;
+}
+h1{
+    text-align: center;
+    color: #222;
+    margin-bottom: 26px;
+    font-size: 22px;
+}
+.upload-area{
+    border: 2px dashed #dddddd;
+    border-radius: 12px;
+    padding: 50px 20px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 24px;
+    transition: 0.2s;
+}
+.upload-area:hover{
+    border-color: #07C160;
+}
+#file-input{
+    display: none;
+}
+.setting-box{
+    background: #f8f8f8;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+}
+.quality-row{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+#quality-slider{
+    flex: 1;
+}
+#quality-value{
+    width: 60px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #07C160;
+}
+.btn{
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+}
+.green{
+    background: #07C160;
+    color: white;
+}
+.grey{
+    background: #999;
+    color: white;
+}
+.preview-wrap{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+}
+.preview-card{
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 12px;
+}
+.preview-card h3{
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: #333;
+}
+.preview-card img{
+    width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+}
+.size-text{
+    font-size: 13px;
+    color: #666;
+    margin-top: 8px;
+}
+.operate-box{
+    text-align: center;
+    margin-top: 20px;
+    display: none;
+}
+.tip{
+    font-size: 13px;
+    color: #888;
+    margin-top: 6px;
+}
+</style>
+</head>
+<body>
+<h1>图片压缩工具</h1>
+
+<div class="upload-area" id="uploadBox">
+    <p style="font-size:16px; color:#666;">点击上传图片（JPG/PNG/WebP）</p>
+    <p class="tip">纯本地浏览器压缩，图片不会上传外网</p>
+    <input type="file" id="file-input" accept="image/*">
+</div>
+
+<div class="setting-box">
+    <div class="quality-row">
+        <span>压缩画质比例：</span>
+        <input type="range" min="0.1" max="100" step="0.1" value="60" id="quality-slider">
+        <span id="quality-value">60%</span>
+    </div>
+    <p class="tip">数值越小，压缩体积越小，画质越低；100%为原图无损画质</p>
+</div>
+
+<div class="operate-box" id="operateArea">
+    <button class="btn green" id="compressBtn">执行压缩</button>
+    <button class="btn grey" onclick="resetAll()" style="margin-left:10px;">重置</button>
+</div>
+
+<div class="preview-wrap" id="previewWrap">
+    <div class="preview-card">
+        <h3>原图预览</h3>
+        <img id="origin-img" src="白色.png" alt="原图">
+        <div class="size-text">原图大小：<span id="origin-size">--</span></div>
+    </div>
+    <div class="preview-card">
+        <h3>压缩后预览</h3>
+        <img id="compress-img" src="白色.png" alt="压缩图">
+        <div class="size-text">压缩后大小：<span id="compress-size">--</span></div>
+    </div>
+</div>
+
+<script>
+// DOM元素
+const fileInput = document.getElementById('file-input');
+const uploadBox = document.getElementById('uploadBox');
+const slider = document.getElementById('quality-slider');
+const valueText = document.getElementById('quality-value');
+const operateArea = document.getElementById('operateArea');
+const compressBtn = document.getElementById('compressBtn');
+const originImg = document.getElementById('origin-img');
+const compressImg = document.getElementById('compress-img');
+const originSizeText = document.getElementById('origin-size');
+const compressSizeText = document.getElementById('compress-size');
+
+let originFile = null;
+let compressBlob = null;
+
+// 滑块同步百分比文字
+slider.addEventListener('input', ()=>{
+    valueText.innerText = slider.value + "%";
+})
+
+// 点击上传框唤起文件选择
+uploadBox.addEventListener('click', ()=>{
+    fileInput.click();
+})
+
+// 上传图片读取预览
+fileInput.addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file || !file.type.startsWith('image/')){
+        alert("请上传图片文件！");
+        return;
+    }
+    originFile = file;
+    // 展示原图
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = res=>{
+        originImg.src = res.target.result;
+        originSizeText.innerText = getFileSize(file.size);
+        operateArea.style.display = "block";
+        // 清空上一次压缩结果
+        compressImg.src = "";
+        compressSizeText.innerText = "--";
+        compressBlob = null;
+    }
+})
+
+// 压缩按钮执行逻辑
+compressBtn.addEventListener('click', compressImage)
+
+// 核心压缩函数
+function compressImage(){
+    if(!originFile) return alert("请先上传图片！");
+    // 转换百分比 0.1~100 => 0.001 ~ 1
+    const quality = Number(slider.value) / 100;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.src = URL.createObjectURL(originFile);
+
+    img.onload = ()=>{
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        // canvas导出压缩图片
+        canvas.toBlob((blob)=>{
+            compressBlob = blob;
+            const url = URL.createObjectURL(blob);
+            compressImg.src = url;
+            compressSizeText.innerText = getFileSize(blob.size);
+            // 自动下载
+            const a = document.createElement('a');
+            a.href = url;
+            const fileName = originFile.name.replace(/(\.\w+)$/, "_压缩.jpg");
+            a.download = fileName;
+            a.click();
+        }, "image/jpeg", quality)
+    }
+}
+
+// 文件字节转友好单位 KB/MB
+function getFileSize(bytes){
+    if(bytes < 1024) return bytes + " B";
+    else if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+    else return (bytes / (1024*1024)).toFixed(2) + " MB";
+}
+
+// 全部重置清空
+function resetAll(){
+    fileInput.value = "";
+    originFile = null;
+    compressBlob = null;
+    originImg.src = "";
+    compressImg.src = "";
+    originSizeText.innerText = "--";
+    compressSizeText.innerText = "--";
+    operateArea.style.display = "none";
+    slider.value = 60;
+    valueText.innerText = "60%";
+}
+</script>
+</body>
+</html>

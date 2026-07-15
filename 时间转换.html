@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间戳转换工具_空铭工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+            /* 清除手机端点击蓝色高亮 */
+            -webkit-tap-highlight-color: transparent;
+            outline: none !important;
+        }
+        body {
+            background: #ffffff;
+            padding: 40px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #07C160;
+            text-align: center;
+            margin-bottom: 36px;
+            font-size: 24px;
+            font-weight: 500;
+        }
+        .box {
+            margin-bottom: 24px;
+        }
+        label {
+            display: block;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        input:focus {
+            border-color: #07C160;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .green-btn {
+            background: #07C160;
+            color: white;
+        }
+        .copy-btn {
+            background: #f5f5f5;
+            color: #333;
+        }
+        button:active {
+            opacity: 0.85;
+        }
+        .tip {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #888;
+            white-space: pre-line;
+        }
+        .split-line {
+            height: 1px;
+            background: #eee;
+            margin: 32px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>时间戳 · 日期 · 时分秒换算</h1>
+
+    <!-- 1. 秒 ↔ 分钟 双向转换（新增模块） -->
+    <div class="box">
+        <label>秒 / 分钟 互相换算</label>
+        <input type="number" id="timeNumInput" placeholder="输入数字，支持小数">
+        <div class="btn-group">
+            <button class="green-btn" onclick="secToMin()">秒转分钟</button>
+            <button class="green-btn" onclick="minToSec()">分钟转秒</button>
+            <button class="copy-btn" onclick="copyTimeUnitRes()">复制结果</button>
+        </div>
+        <div class="tip" id="timeUnitRes"></div>
+    </div>
+
+    <div class="split-line"></div>
+
+    <!-- 2. 时间戳转日期 -->
+    <div class="box">
+        <label>输入时间戳（秒/毫秒）</label>
+        <input type="number" id="timestampInput" placeholder="1750000000 或 1750000000000">
+        <div class="btn-group">
+            <button class="green-btn" onclick="tsToDate()">转换为日期时间</button>
+            <button class="copy-btn" onclick="copyRes1()">复制结果</button>
+        </div>
+        <div class="tip" id="res1"></div>
+    </div>
+
+    <div class="split-line"></div>
+
+    <!-- 3. 日期转时间戳 -->
+    <div class="box">
+        <label>输入日期时间</label>
+        <input type="datetime-local" id="dateInput">
+        <div class="btn-group">
+            <button class="green-btn" onclick="dateToTs()">转换为时间戳</button>
+            <button class="copy-btn" onclick="copyRes2()">复制秒级时间戳</button>
+        </div>
+        <div class="tip" id="res2"></div>
+    </div>
+
+    <div class="split-line"></div>
+
+    <!-- 4. 当前时间戳快捷获取 -->
+    <div class="box">
+        <button class="green-btn" onclick="getNowTs()">获取当前时间戳</button>
+        <div class="tip" id="nowTip"></div>
+    </div>
+
+    <script>
+        let result1 = "";
+        let result2 = "";
+        let timeUnitResult = "";
+
+        // ========== 新增：秒/分钟互相转换函数 ==========
+        function secToMin() {
+            const num = Number(document.getElementById('timeNumInput').value.trim());
+            if (isNaN(num) || num < 0) {
+                document.getElementById('timeUnitRes').innerText = "请输入有效的正数";
+                timeUnitResult = "";
+                return;
+            }
+            const min = num / 60;
+            const h = (num / 3600).toFixed(4);
+            timeUnitResult = `${num} 秒 = ${min.toFixed(4)} 分钟\n${num} 秒 = ${h} 小时`;
+            document.getElementById('timeUnitRes').innerText = "换算结果：\n" + timeUnitResult;
+        }
+        function minToSec() {
+            const num = Number(document.getElementById('timeNumInput').value.trim());
+            if (isNaN(num) || num < 0) {
+                document.getElementById('timeUnitRes').innerText = "请输入有效的正数";
+                timeUnitResult = "";
+                return;
+            }
+            const sec = num * 60;
+            timeUnitResult = `${num} 分钟 = ${sec} 秒`;
+            document.getElementById('timeUnitRes').innerText = "换算结果：\n" + timeUnitResult;
+        }
+        function copyTimeUnitRes() {
+            if (!timeUnitResult) return alert("暂无换算结果");
+            navigator.clipboard.writeText(timeUnitResult);
+            alert("已复制单位换算结果");
+        }
+
+        // 时间戳转日期
+        function tsToDate() {
+            const ts = document.getElementById('timestampInput').value.trim();
+            if (!ts) {
+                document.getElementById('res1').innerText = "请输入时间戳";
+                return;
+            }
+            let time;
+            if (ts.length === 13) {
+                time = new Date(Number(ts));
+            } else if (ts.length === 10) {
+                time = new Date(Number(ts) * 1000);
+            } else {
+                document.getElementById('res1').innerText = "时间戳格式错误";
+                return;
+            }
+            const year = time.getFullYear();
+            const mon = String(time.getMonth() + 1).padStart(2, '0');
+            const day = String(time.getDate()).padStart(2, '0');
+            const h = String(time.getHours()).padStart(2, '0');
+            const m = String(time.getMinutes()).padStart(2, '0');
+            const s = String(time.getSeconds()).padStart(2, '0');
+            result1 = `${year}-${mon}-${day} ${h}:${m}:${s}`;
+            document.getElementById('res1').innerText = "转换结果：" + result1;
+        }
+
+        // 日期转时间戳
+        function dateToTs() {
+            const val = document.getElementById('dateInput').value;
+            if (!val) {
+                document.getElementById('res2').innerText = "请选择日期时间";
+                return;
+            }
+            const date = new Date(val);
+            const secTs = Math.floor(date.getTime() / 1000);
+            const msTs = date.getTime();
+            result2 = secTs;
+            document.getElementById('res2').innerText = `秒级：${secTs} ｜ 毫秒级：${msTs}`;
+        }
+
+        // 获取当前时间戳
+        function getNowTs() {
+            const now = new Date();
+            const sec = Math.floor(now.getTime() / 1000);
+            const ms = now.getTime();
+            const year = now.getFullYear();
+            const mon = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('nowTip').innerText =
+                `当前时间：${year}-${mon}-${day} ${h}:${m}:${s}\n秒时间戳：${sec}\n毫秒时间戳：${ms}`;
+        }
+
+        // 复制功能
+        function copyRes1() {
+            if (!result1) return alert("暂无转换结果");
+            navigator.clipboard.writeText(result1);
+            alert("已复制日期：" + result1);
+        }
+        function copyRes2() {
+            if (!result2) return alert("暂无转换结果");
+            navigator.clipboard.writeText(result2);
+            alert("已复制秒级时间戳：" + result2);
+        }
+    </script>
+</body>
+</html>
