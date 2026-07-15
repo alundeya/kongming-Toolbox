@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>B站创作激励收益分析_空铭工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background-color: #fff;
+            padding: 30px 15px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .container {
+               padding: 28px;
+           }
+        h1 {
+            text-align: center;
+            color: #fb7299;
+            margin-bottom: 24px;
+            font-size: 22px;
+        }
+        .form-item {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #fb7299;
+        }
+        button {
+            width: 100%;
+            padding: 13px;
+            background-color: #fb7299;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #e66287;
+        }
+        #resultBox {
+            margin-top: 24px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .normal {
+            background-color: #ecfdf5;
+            border:1px solid #10b981;
+        }
+        .low {
+            background-color: #fffbeb;
+            border:1px solid #f59e0b;
+        }
+        .abnormal {
+            background-color: #fef2f2;
+            border:1px solid #ef4444;
+        }
+        .result-title {
+            font-size:18px;
+            font-weight:bold;
+            margin-bottom:12px;
+        }
+        .result-text {
+            line-height:1.7;
+            color:#333;
+            font-size:15px;
+        }
+        .tip-desc {
+            margin-top:20px;
+            font-size:13px;
+            color:#666;
+            line-height:1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>B站创作激励收益分析</h1>
+        <form id="dataForm">
+            <div class="form-item">
+                <label>1. 本视频实际到手收益（发布2天后更新的金额，元）</label>
+                <input type="number" step="0.01" id="realIncome" placeholder="例：12.8">
+            </div>
+            <div class="form-item">
+                <label>2. 视频总播放量</label>
+                <input type="number" id="playNum" placeholder="例：15000">
+            </div>
+            <div class="form-item">
+                <label>3. 点赞总量</label>
+                <input type="number" id="likeNum" placeholder="例：320">
+            </div>
+            <div class="form-item">
+                <label>4. 本次更新前，断更多少天（停更天数）</label>
+                <input type="number" id="breakDay" placeholder="例：7">
+            </div>
+            <div class="form-item">
+                <label>5. 视频完播率（直接填百分比数字，如25代表25%）</label>
+                <input type="number" id="finishRate" placeholder="例：22">
+            </div>
+            <div class="form-item">
+                <label>6. 评论总数</label>
+                <input type="number" id="commentNum" placeholder="例：45">
+            </div>
+            <div class="form-item">
+                <label>7. 转发（分享）数量</label>
+                <input type="number" id="shareNum" placeholder="例：28">
+            </div>
+            <div class="form-item">
+                <label>8. 收藏数量</label>
+                <input type="number" id="collectNum" placeholder="例：66">
+            </div>
+            <button type="submit">开始分析收益是否合理</button>
+        </form>
+
+        <div id="resultBox">
+            <div class="result-title" id="resultLevel"></div>
+            <div class="result-text" id="resultDetail"></div>
+        </div>
+
+        <div class="tip-desc">
+            <strong>参考规则说明：</strong><br>
+            1. B站创作激励为动态单价，由播放量、完播率、互动率、账号更新稳定性、内容垂直度综合判定，数据发布2天后才会完整统计；<br>
+            2. 生活区泛娱乐万次播放收益约5~15元，知识科普、测评类优质内容可达15~40元/万播放；<br>
+            3. 长期断更会降低账号基础权重，完播率、点赞、评论、转发、收藏越高，单价越高；<br>
+            4. 收益过低大概率是账号权重下滑、内容非原创、低完播率，过高则可能是平台活动补贴。
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('dataForm');
+        const resultBox = document.getElementById('resultBox');
+        const resultLevel = document.getElementById('resultLevel');
+        const resultDetail = document.getElementById('resultDetail');
+
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+
+            // 获取所有输入值
+            const realIncome = parseFloat(document.getElementById('realIncome').value);
+            const playNum = parseInt(document.getElementById('playNum').value);
+            const likeNum = parseInt(document.getElementById('likeNum').value);
+            const breakDay = parseInt(document.getElementById('breakDay').value);
+            const finishRate = parseFloat(document.getElementById('finishRate').value);
+            const commentNum = parseInt(document.getElementById('commentNum').value);
+            const shareNum = parseInt(document.getElementById('shareNum').value);
+            const collectNum = parseInt(document.getElementById('collectNum').value);
+
+            // 基础校验
+            if(isNaN(realIncome) || isNaN(playNum) || playNum <=0){
+                alert('请正确填写播放量和实际收益，必须大于0');
+                return;
+            }
+
+            // 1、计算互动率综合得分
+            const totalInteract = likeNum + commentNum + shareNum + collectNum;
+            const interactRate = totalInteract / playNum;
+
+            // 2、基础万播单价区间（B站现行市场价）
+            let minPrice = 5;  // 最差泛娱乐低质下限
+            let maxPrice = 15; // 普通生活区上限
+
+            // 根据完播率提升单价
+            if(finishRate >= 30){
+                minPrice = 15;
+                maxPrice = 40; // 高完播优质科普向
+            }else if(finishRate >= 18){
+                minPrice = 8;
+                maxPrice = 22;
+            }
+
+            // 互动率加成
+            if(interactRate >= 0.05){
+                maxPrice *= 1.3;
+                minPrice *= 1.2;
+            }else if(interactRate <= 0.01){
+                maxPrice *= 0.6;
+                minPrice *= 0.7;
+            }
+
+            // 断更惩罚（断更越久，账号权重越低，单价打折）
+            if(breakDay > 30){
+                maxPrice *= 0.55;
+                minPrice *= 0.6;
+            }else if(breakDay > 14){
+                maxPrice *= 0.75;
+                minPrice *= 0.8;
+            }else if(breakDay <=3){
+                maxPrice *= 1.15;
+                minPrice *= 1.1;
+            }
+
+            // 理论最低、最高收益
+            const tenThousandPlay = playNum / 10000;
+            const expectMin = Number((tenThousandPlay * minPrice).toFixed(2));
+            const expectMax = Number((tenThousandPlay * maxPrice).toFixed(2));
+
+            // 判定结果档位
+            let statusClass, title, explain;
+            const toleranceLow = expectMin * 0.6; // 低于最低预期60% = 明显偏低
+            const toleranceHigh = expectMax * 1.4; // 高于最高预期140% = 异常偏高
+
+            if(realIncome >= toleranceLow && realIncome <= toleranceHigh){
+                statusClass = 'normal';
+                title = '✅ 你的视频收益属于正常合理范围';
+                explain = `
+                <p>1. 根据你提交的播放、完播率、互动数据、断更天数测算，这条视频理论合理收益区间：<strong>${expectMin} ~ ${expectMax} 元</strong></p>
+                <p>2. 实际收益 ${realIncome} 元落在正常浮动区间内，符合B站创作激励动态算法规则。</p>
+                <p>3. 影响本次单价的关键因素：</p>
+                <ul style="padding-left:20px;margin:8px 0;">
+                    <li>综合互动率：${(interactRate*100).toFixed(2)}%（点赞+评论+转发+收藏）</li>
+                    <li>视频完播率：${finishRate}%（完播率越高，平台给到的单价权重越高）</li>
+                    <li>断更间隔：${breakDay}天（稳定更新的账号基础单价更高）</li>
+                </ul>
+                <p>结论：账号权重、内容质量匹配当前收益，无需申诉，正常更新即可稳步提升单价。</p>
+                `;
+            }else if(realIncome < toleranceLow){
+                statusClass = 'low';
+                title = '⚠️ 收益明显低于正常预期，存在缩水情况';
+                explain = `
+                <p>1. 理论合理收益区间：<strong>${expectMin} ~ ${expectMax} 元</strong>，你仅拿到 ${realIncome} 元，远低于下限。</p>
+                <p>2. 造成收益偏低的常见原因（按概率排序）：</p>
+                <ul style="padding-left:20px;margin:8px 0;">
+                    <li>① 内容非原创、搬运、二次剪辑无授权，平台压低激励单价</li>
+                    <li>② 完播率过低，用户中途退出过多，判定内容价值不足</li>
+                    <li>③ 长期断更导致账号整体权重下跌，推荐流量与单价双降</li>
+                    <li>④ 互动数据太少，平台判定用户喜爱度不足，无法触发溢价系数</li>
+                    <li>⑤ 视频先发布在其他平台，B站非首发会取消大部分激励分成</li>
+                </ul>
+                <p>优化建议：固定周期更新、提升开头吸引力拉高完播率、引导观众一键三连与评论。</p>
+                `;
+            }else{
+                statusClass = 'abnormal';
+                title = '❌ 收益高于正常上限，属于异常偏高';
+                explain = `
+                <p>1. 理论最高合理收益仅为 <strong>${expectMax} 元</strong>，实际收益 ${realIncome} 元超出合理上限。</p>
+                <p>2. 高额额外收益来源：</p>
+                <ul style="padding-left:20px;margin:8px 0;">
+                    <li>① 参与B站官方活动、热门话题流量补贴、任务激励金叠加</li>
+                    <li>② 账号属于平台重点扶持创作者，额外内容补贴加成</li>
+                    <li>③ 视频被推送上首页大流量池，广告分成收益拉高总额</li>
+                    <li>④ 存在限时激励翻倍活动加成</li>
+                </ul>
+                <p>若无任何平台活动，则建议查看创作中心收益明细，核对基础激励与广告分成构成。</p>
+                `;
+            }
+
+            // 渲染页面
+            resultBox.className = '';
+            resultBox.classList.add(statusClass);
+            resultBox.style.display = 'block';
+            resultLevel.innerHTML = title;
+            resultDetail.innerHTML = explain;
+
+            // 滚动到结果位置
+            resultBox.scrollIntoView({behavior:'smooth'});
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>富豪购物模拟器_空铭工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif;}
+body{background:#f0f2f5;padding-bottom:80px;}
+.container{max-width:600px;margin:0 auto;padding:15px;}
+.header{
+    background:linear-gradient(135deg,#ff9500,#ff3b30);
+    color:white;
+    padding:20px 15px;
+    border-radius:12px;
+    margin-bottom:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.money-text{font-size:24px;font-weight:bold;}
+.tab-box{display:flex;gap:8px;margin-bottom:15px;}
+.tab{
+    flex:1;text-align:center;padding:12px;
+    background:#ddd;border-radius:8px;cursor:pointer;
+    font-weight:500;
+}
+.tab.active{background:#ff9500;color:#fff;}
+.panel{display:none;background:#fff;border-radius:12px;padding:15px;box-shadow:0 2px 8px #00000015;}
+.panel.show{display:block;}
+.item-card{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px;border-bottom:1px solid #eee;
+}
+.item-name{font-size:16px;}
+.item-price{color:#ff3b30;font-weight:bold;}
+.btn{
+    padding:8px 16px;border:none;border-radius:6px;cursor:pointer;
+    font-size:14px;font-weight:500;
+}
+.btn-buy{background:#28c76f;color:#fff;}
+.btn-task{background:#007aff;color:#fff;width:100%;padding:14px;margin:10px 0;}
+.task-desc{padding:12px;background:#fff4e5;border-radius:8px;margin:10px 0;line-height:1.6;}
+.bag-item{padding:8px 0;border-bottom:1px solid #eee;}
+.empty-tip{text-align:center;padding:40px;color:#999;}
+.tip-num{color:#ff3b30;font-weight:bold;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <div>我的资产</div>
+            <div class="money-text">💰 <span id="money">100</span> 金币</div>
+        </div>
+        <div>富豪模拟器</div>
+    </div>
+
+    <div class="tab-box">
+        <div class="tab active" data-tab="task">每日任务</div>
+        <div class="tab" data-tab="shop">豪华商场</div>
+        <div class="tab" data-tab="bag">我的背包</div>
+    </div>
+
+    <!-- 任务面板 -->
+    <div class="panel show" id="task">
+        <h3>完成任务赚取金币（每日上限100次）</h3>
+        <p>今日已完成任务：<span class="tip-num" id="doneCount">0</span> / 100</p>
+        <div class="task-desc" id="taskText"></div>
+        <button class="btn btn-task" id="finishTask">完成任务领取奖励</button>
+        <p style="font-size:13px;color:#666">每次奖励随机 10 ~ 50 金币，凌晨自动重置全部任务次数</p>
+    </div>
+
+    <!-- 商场面板 -->
+    <div class="panel" id="shop">
+        <h3>高端商场选购</h3>
+        <div id="shopList"></div>
+    </div>
+
+    <!-- 背包面板 -->
+    <div class="panel" id="bag">
+        <h3>已购入物品</h3>
+        <div id="bagList"></div>
+    </div>
+</div>
+
+<script>
+// 本地存储键名
+const STORAGE_KEY = "rich_shop_save";
+// 每日最大任务次数
+const MAX_TASK_DAY = 100;
+// 商场商品列表
+const shopGoods = [
+    {name:"名牌手表",price:280},
+    {name:"轻奢包包",price:350},
+    {name:"新款手机",price:499},
+    {name:"品牌球鞋",price:120},
+    {name:"黄金项链",price:680},
+    {name:"豪车模型",price:220},
+    {name:"高端香水",price:95},
+    {name:"潮牌服饰",price:166},
+    {name:"独栋别墅",price:9999},
+    {name:"超级跑车",price:6666},
+    {name:"私人游艇",price:18888},
+   {name:"限量钻石",price:5200},
+{name:"市区精装小户型公寓",price:980000},
+{name:"城郊联排轻奢别墅",price:3680000},
+{name:"市中心临街旺铺",price:2150000},
+{name:"山顶独栋庄园",price:12800000},
+{name:"江景大平层豪宅",price:5600000},
+{name:"地下产权双车位",price:320000},
+{name:"山林度假康养木屋",price:860000},
+{name:"甲级写字楼办公间",price:4200000},
+{name:"国产城市SUV",price:158000},
+{name:"七座商务MPV",price:246000},
+{name:"豪华行政旗舰轿车",price:790000},
+{name:"入门级超跑跑车",price:2860000},
+{name:"硬派越野四驱豪车",price:650000},
+{name:"经典复古老爷车",price:4500000},
+{name:"新能源城市代步车",price:89000},
+{name:"全尺寸旅居房车",price:1260000},
+{name:"双门轻奢轿跑",price:1690000},
+{name:"纯电旗舰高端轿车",price:320000},
+{name:"私人小型运动游艇",price:2600000},
+{name:"近郊生态农场土地",price:1950000},
+{name:"网红餐饮临街门店",price:1680000},
+{name:"文创园区工作室",price:750000},
+{name:"赛道改装性能跑车",price:5900000},
+{name:"越野皮卡露营房车",price:960000},
+{name:"全尺寸豪华SUV",price:530000},
+{name:"全球限量联名跑车",price:9200000},
+{name:"江景LOFT复式公寓",price:1350000},
+{name:"温泉入户中式小院",price:2480000},
+{name:"物流园区仓储仓库",price:820000},
+{name:"拖挂式轻奢露营拖车",price:198000},
+{name:"加长礼宾定制轿车",price:3650000},
+{name:"山地越野重型摩托",price:125000},
+{name:"复古巡航大排量机车",price:268000},
+{name:"封闭式私家停车库",price:450000},
+{name:"湖畔观景独栋小屋",price:1420000},
+{name:"商圈整层精装公寓",price:6850000},
+{name:"近海小型货轮股权",price:7600000},
+{name:"私人直升机停机坪",price:15600000},
+{name:"轻型私人直升飞机",price:28500000},
+{name:"中型商务公务机",price:126000000},
+{name:"铂金钻戒婚戒套装",price:16800},
+{name:"天然翡翠手镯",price:9600},
+{name:"黄金传承项链",price:7200},
+{name:"红宝石耳钉套装",price:4300},
+{name:"蓝宝石典藏胸针",price:6100},
+{name:"和田玉平安玉佩",price:3800},
+{name:"999实心黄金金条",price:12500},
+{name:"深海珍珠项链礼盒",price:5500},
+{name:"古董青花瓷摆件",price:26900},
+{name:"名家手绘书画卷轴",price:18200},
+{name:"绝版限量邮票套组",price:8900},
+{name:"复古机械怀表典藏款",price:7600},
+{name:"瑞士全自动机械腕表",price:13800},
+{name:"手工鳄鱼皮商务皮包",price:6500},
+{name:"高定手工西装套装",price:9200},
+{name:"限量款手工皮鞋",price:4100},
+{name:"羊绒高定大衣",price:5800},
+{name:"设计师轻奢丝巾礼盒",price:2200},
+{name:"纯银手工茶具套装",price:3600},
+{name:"红木实木茶桌摆件",price:15300},
+{name:"金丝楠木收藏摆件",price:22700},
+{name:"智能全屋智能家居系统",price:46000},
+{name:"顶配私人影音影院",price:32800},
+{name:"恒温酒柜藏酒套装",price:19500},
+{name:"高端电竞顶配主机",price:23000},
+{name:"限量款航拍无人机",price:12600},
+{name:"专业全画幅相机套装",price:16900},
+{name:"恒温恒湿雪茄柜",price:8700},
+{name:"进口红酒整箱典藏款",price:6300},
+{name:"高端香薰全套收藏",price:3100},
+{name:"定制真皮沙发组合",price:12800},
+{name:"智能按摩顶配座椅",price:7500},
+{name:"户外无边泳池配套",price:36200},
+{name:"庭院假山流水景观",price:18600},
+{name:"名贵盆栽迎客松",price:9900},
+{name:"纯种名贵宠物幼崽",price:5600},
+{name:"私人健身室全套器械",price:25800},
+{name:"定制恒温汗蒸房",price:13400},
+{name:"海外海岛永久使用权",price:96800000},
+{name:"城市顶层空中别墅",price:6950000},
+{name:"军用改装越野装甲车",price:18500000},
+{name:"水上两栖观光车",price:3260000},
+{name:"雪地专用履带越野车",price:2780000},
+{name:"太空舱旅居民宿",price:830000},
+{name:"古法锻造宝刀藏品",price:17200},
+{name:"鎏金古董佛像摆件",price:29100}
+];
+// 任务库
+const taskList = [
+    "帮朋友跑腿办事",
+    "线上兼职接单",
+    "自媒体文案创作",
+    "设计一张宣传海报",
+    "外卖配送订单",
+    "整理文件资料",
+    "短视频剪辑工作",
+    "客服在线值班",
+    "线下市场调研",
+    "图片修图美化",
+    "文案翻译校对",
+    "活动场地布置",
+    "数据表格录入",
+    "商品上架编辑",
+    "社群维护运营"
+];
+
+// 获取今日日期标识（用来隔天重置任务）
+function getTodayKey(){
+    const now = new Date();
+    return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+}
+
+// 初始化存档
+function initData(){
+    let save = localStorage.getItem(STORAGE_KEY);
+    const today = getTodayKey();
+    if(!save){
+        save = JSON.stringify({
+            money:100,
+            bag:[],
+            taskDate: today,
+            taskFinishNum: 0,
+            currentTask: getRandomTask()
+        });
+        localStorage.setItem(STORAGE_KEY,save);
+    }
+    let data = JSON.parse(save);
+    // 如果日期不一样，直接重置今日任务次数
+    if(data.taskDate !== today){
+        data.taskDate = today;
+        data.taskFinishNum = 0;
+        data.currentTask = getRandomTask();
+        saveData(data);
+    }
+    return data;
+}
+
+// 保存数据到本地
+function saveData(data){
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+}
+
+// 获取随机任务
+function getRandomTask(){
+    return taskList[Math.floor(Math.random()*taskList.length)];
+}
+// 获取10000-20000随机整数金币
+function getRandomMoney(){
+    return Math.floor(Math.random() * 10001) + 10000;
+}
+
+let userData = initData();
+
+// 渲染金钱
+function renderMoney(){
+    document.getElementById("money").innerText = userData.money;
+}
+
+// 渲染任务面板
+function renderTask(){
+    document.getElementById("doneCount").innerText = userData.taskFinishNum;
+    document.getElementById("taskText").innerText = `当前任务：${userData.currentTask}`;
+    const btn = document.getElementById("finishTask");
+    
+    if(userData.taskFinishNum >= MAX_TASK_DAY){
+        btn.innerText = "今日任务已全部做完，明天再来";
+        btn.disabled = true;
+        btn.style.background="#999";
+    }else{
+        btn.innerText = "完成任务领取奖励，刷新下一个任务";
+        btn.disabled = false;
+        btn.style.background="#007aff";
+    }
+}
+
+// 渲染商场
+function renderShop(){
+    const box = document.getElementById("shopList");
+    box.innerHTML = "";
+    shopGoods.forEach(good=>{
+        const div = document.createElement("div");
+        div.className = "item-card";
+        div.innerHTML = `
+            <div>
+                <div class="item-name">${good.name}</div>
+                <div class="item-price">${good.price} 金币</div>
+            </div>
+            <button class="btn btn-buy" data-price="${good.price}" data-name="${good.name}">购买</button>
+        `;
+        box.appendChild(div);
+    })
+
+    // 购买按钮事件
+    document.querySelectorAll(".btn-buy").forEach(btn=>{
+        btn.onclick = ()=>{
+            const price = Number(btn.dataset.price);
+            const name = btn.dataset.name;
+            if(userData.money >= price){
+                userData.money -= price;
+                userData.bag.push(name);
+                saveData(userData);
+                renderMoney();
+                renderBag();
+                alert(`成功购入【${name}】`);
+            }else{
+                alert("金币不足！继续做任务积累财富吧");
+            }
+        }
+    })
+}
+
+// 渲染背包
+function renderBag(){
+    const box = document.getElementById("bagList");
+    box.innerHTML = "";
+    if(userData.bag.length === 0){
+        box.innerHTML = '<div class="empty-tip">背包空空，去商场疯狂消费吧</div>';
+        return;
+    }
+    userData.bag.forEach((item,idx)=>{
+        const div = document.createElement("div");
+        div.className = "bag-item";
+        div.innerText = `${idx+1}. ${item}`;
+        box.appendChild(div);
+    })
+}
+
+// 完成任务按钮
+document.getElementById("finishTask").onclick = ()=>{
+    if(userData.taskFinishNum >= MAX_TASK_DAY) return;
+    
+    const reward = getRandomMoney();
+    userData.money += reward;
+    userData.taskFinishNum += 1;
+    userData.currentTask = getRandomTask(); // 自动刷新下一个任务
+    saveData(userData);
+    
+    renderMoney();
+    renderTask();
+    alert(`任务完成！获得 ${reward} 金币\n还可以继续做 ${MAX_TASK_DAY - userData.taskFinishNum} 个任务`);
+}
+
+// 标签切换
+document.querySelectorAll(".tab").forEach(tab=>{
+    tab.onclick = ()=>{
+        document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+        tab.classList.add("active");
+        const target = tab.dataset.tab;
+        document.querySelectorAll(".panel").forEach(p=>p.classList.remove("show"));
+        document.getElementById(target).classList.add("show");
+    }
+})
+
+// 页面初始化渲染
+renderMoney();
+renderTask();
+renderShop();
+renderBag();
+</script>
+</body>
+</html>

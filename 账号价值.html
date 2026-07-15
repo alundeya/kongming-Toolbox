@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>B站账号估值_空铭工具箱</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: system-ui,Microsoft Yahei,sans-serif;
+}
+body{
+    background:#fff;
+    padding:30px 15px;
+}
+.wrap{
+    max-width:100%;
+    margin:0 auto;
+      padding:30px;
+ }
+h1{
+    text-align:center;
+    color:#fb7299;
+    margin-bottom:28px;
+    font-size:22px;
+}
+.item{
+    margin-bottom:18px;
+}
+label{
+    display:block;
+    margin-bottom:6px;
+    font-weight:500;
+    color:#222;
+}
+input, select{
+    width:100%;
+    padding:12px 15px;
+    border:1px solid #ddd;
+    border-radius:7px;
+    font-size:15px;
+    background:#fff;
+}
+input:focus, select:focus{
+    outline:none;
+    border-color:#fb7299;
+}
+button{
+    width:100%;
+    padding:14px;
+    background:#fb7299;
+    color:#fff;
+    border:none;
+    border-radius:7px;
+    font-size:16px;
+    cursor:pointer;
+    margin-top:8px;
+}
+button:hover{
+    background:#e66287;
+}
+#result{
+    margin-top:26px;
+    padding:22px;
+    border-radius:10px;
+    display:none;
+    line-height:1.75;
+}
+.level-high{
+    background:#ecfdf5;
+    border:1px solid #10b981;
+}
+.level-normal{
+    background:#fffbeb;
+    border:1px solid #f59e0b;
+}
+.level-low{
+    background:#fef2f2;
+    border:1px solid #ef4444;
+}
+.val-title{
+    font-size:19px;
+    font-weight:bold;
+    margin-bottom:12px;
+}
+.desc-text{
+    font-size:15px;
+    color:#333;
+}
+.note{
+    margin-top:24px;
+    font-size:13px;
+    color:#666;
+    line-height:1.6;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>B站账号综合价值估值计算器</h1>
+    <form id="valForm">
+        <div class="item">
+            <label>1. 账号总粉丝数量</label>
+            <input type="number" id="fans" placeholder="例：12500">
+        </div>
+        <div class="item">
+            <label>2. 账号全部视频累计总播放量</label>
+            <input type="number" id="totalPlay" placeholder="例：860000">
+        </div>
+        <div class="item">
+            <label>3. 全部作品累计总点赞量</label>
+            <input type="number" id="totalLike" placeholder="例：42000">
+        </div>
+        <div class="item">
+            <label>4. 全部作品累计总收藏量</label>
+            <input type="number" id="totalCollect" placeholder="例：11000">
+        </div>
+        <div class="item">
+            <label>5. 全部作品累计总转发（分享）量</label>
+            <input type="number" id="totalShare" placeholder="例：3600">
+        </div>
+        <div class="item">
+            <label>6. 是否完成实名认证</label>
+            <select id="isRealName">
+                <option value="1">已实名（无法解绑，过户风险大，折价40%）</option>
+                <option value="0" selected>未实名（可绑定自己身份，易转手，原价）</option>
+            </select>
+        </div>
+        <div class="item">
+            <label>7. 账号处罚封禁类型</label>
+            <select id="banType">
+                <option value="1" selected>无任何违规处罚（完整价值）</option>
+                <option value="0.75">仅单视频限流/下架</option>
+                <option value="0.5">短期封禁7~30天小黑屋</option>
+                <option value="0.2">中长期封禁30~365天</option>
+                <option value="0.05">永久封禁</option>
+            </select>
+        </div>
+        <button type="submit">开始计算账号估值</button>
+    </form>
+
+    <div id="result">
+        <div class="val-title" id="resultTitle"></div>
+        <div class="desc-text" id="resultContent"></div>
+    </div>
+
+    <div class="note">
+        <strong>估值折价说明：</strong><br>
+        1. 未实名账号可以绑定买家本人身份证，交易安全度高，保值最优；已实名账号终身无法解绑实名，存在找回风险，固定折价40%；<br>
+        2. 处罚折价梯度：单稿件处罚贬值25%、短期封禁贬值50%、长期封禁贬值80%、永久封禁仅剩5%残值；<br>
+        3. 永久封禁账号无法投稿、直播、获取创作激励，实名无法注销，基本失去自媒体运营价值；<br>
+        4. 最终成交价还受账号等级、内容垂直度、官方签约状态浮动影响。
+    </div>
+</div>
+
+<script>
+const form = document.getElementById('valForm');
+const resultBox = document.getElementById('result');
+const titleDom = document.getElementById('resultTitle');
+const contentDom = document.getElementById('resultContent');
+
+form.addEventListener('submit',e=>{
+    e.preventDefault();
+
+    const fans = Number(document.getElementById('fans').value);
+    const totalPlay = Number(document.getElementById('totalPlay').value);
+    const totalLike = Number(document.getElementById('totalLike').value);
+    const totalCollect = Number(document.getElementById('totalCollect').value);
+    const totalShare = Number(document.getElementById('totalShare').value);
+    const isRealName = Number(document.getElementById('isRealName').value);
+    const banRate = Number(document.getElementById('banType').value);
+
+    if(isNaN(fans) || fans <=0 || isNaN(totalPlay)){
+        alert('请填写有效的数字，粉丝和播放量不能为0');
+        return;
+    }
+
+    // 基础分值计算
+    let score = 0;
+    score += fans * 0.08;
+    score += totalPlay * 0.0012;
+    score += totalLike * 0.004;
+    score += totalCollect * 0.015;
+    score += totalShare * 0.012;
+
+    // 粉丝活跃度系数
+    const fanActiveRate = totalPlay / fans;
+    let discount = 1;
+    if(fanActiveRate < 5){
+        discount = 0.4;
+    }else if(fanActiveRate <15){
+        discount = 0.65;
+    }else if(fanActiveRate <40){
+        discount = 0.85;
+    }else{
+        discount = 1.15;
+    }
+
+    let realNameRate = 1;
+    if(isRealName === 1){
+        realNameRate = 0.6;
+    }
+
+    // 最终估价 = 基础分 × 粉丝活跃系数 × 实名系数 × 封禁处罚系数
+    const finalPrice = Math.round(score * discount * realNameRate * banRate);
+
+    let cls,title,txt;
+    const realNameText = isRealName === 1 ? '已实名（不可解绑）' : '未实名（可自主实名）';
+    let banText = '';
+    switch(banRate){
+        case 1: banText = '无任何违规处罚记录'; break;
+        case 0.75: banText = '仅单视频限流/下架处罚'; break;
+        case 0.5: banText = '短期小黑屋封禁记录'; break;
+        case 0.2: banText = '中长期账号冻结封禁'; break;
+        case 0.05: banText = '永久封禁（账号功能锁定）'; break;
+    }
+
+    if(finalPrice >= 10000){
+        cls = 'level-high';
+        title = '💰 优质高价值账号';
+        txt = `
+        <p>预估市场转让价值：<strong style="font-size:20px;color:#059669">${finalPrice} 元</strong></p>
+        <p>账号优势：粉丝粘性优秀，历史播放和收藏数据充足，属于广告商青睐的优质账号。</p>
+        <p>关键指标分析：</p>
+        <ul style="padding-left:20px;margin:8px 0;">
+            <li>粉丝活跃度系数：${fanActiveRate.toFixed(2)}（单粉丝贡献播放量）</li>
+            <li>账号实名状态：${realNameText}</li>
+            <li>账号处罚状态：${banText}</li>
+            <li>收藏&转发数据充足，内容具备长期复用价值</li>
+        </ul>
+        <p>建议：保持垂直内容更新，账号价值会持续上涨。</p>
+        `;
+    }else if(finalPrice >=1000){
+        cls = 'level-normal';
+        title = '📊 中等正常价值账号';
+        txt = `
+        <p>预估市场转让价值：<strong style="font-size:20px;color:#d97706">${finalPrice} 元</strong></p>
+        <p>账号属于普通UP主水准，数据中规中矩，粉丝有一定活跃度。</p>
+        <ul style="padding-left:20px;margin:8px 0;">
+            <li>账号实名状态：${realNameText}</li>
+            <li>账号处罚状态：${banText}</li>
+        </ul>
+        <p>提升价值方向：增加干货内容提升收藏量，稳定更新拉高粉丝活跃，尽量避免违规处罚。</p>
+        `;
+    }else{
+        cls = 'level-low';
+        title = '📉 低价值账号';
+        txt = `
+        <p>预估市场转让价值：<strong style="font-size:20px;color:#dc2626">${finalPrice} 元</strong></p>
+        <p>账号整体数据偏弱，大概率是新号、断更很久、风控标记封禁或者泛流量杂内容。</p>
+        <ul style="padding-left:20px;margin:8px 0;">
+            <li>账号实名状态：${realNameText}</li>
+            <li>账号处罚状态：${banText}</li>
+        </ul>
+        <p>改善方案：清理违规作品，固定垂直领域更新，慢慢恢复平台权重。永久封禁账号基本无法恢复运营。</p>
+        `;
+    }
+
+    resultBox.className = cls;
+    resultBox.style.display = 'block';
+    titleDom.innerHTML = title;
+    contentDom.innerHTML = txt;
+    resultBox.scrollIntoView({behavior:'smooth'});
+})
+</script>
+</body>
+</html>

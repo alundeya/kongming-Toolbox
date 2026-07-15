@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>微信来电模拟器_空铭工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body {
+            background-color: #000;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 第一步：配置弹窗 */
+        .setup-box {
+            width: 100%;
+            height: 100vh;
+            background: #111;
+            padding: 40px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .setup-title {
+            font-size: 22px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .item-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        label {
+            font-size: 15px;
+            color: #ccc;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #222;
+            color: #fff;
+            font-size: 14px;
+        }
+        input[type="file"] {
+            padding: 10px 0;
+        }
+        .preview-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #333;
+            margin: 8px 0;
+        }
+        #confirmBtn {
+            margin-top: auto;
+            padding: 16px;
+            border-radius: 8px;
+            border: none;
+            background: #07c160;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        /* 第二步：微信来电全屏页面（默认隐藏） */
+        .call-box {
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.7),rgba(0,0,0,0.9));
+            color: #fff;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            padding: 40px 20px;
+        }
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #666;
+        }
+        .name {
+            font-size: 26px;
+            margin-top: 16px;
+            font-weight: 500;
+        }
+        .tip {
+            color: #aaa;
+            font-size: 14px;
+            margin-top: 8px;
+            animation: flash 1.2s infinite;
+        }
+        @keyframes flash {
+            0%,100% {opacity: 1;}
+            50% {opacity: 0.3;}
+        }
+        .btn-group {
+            width: 100%;
+            display: flex;
+            justify-content: space-evenly;
+            position: fixed;
+            bottom: 60px;
+        }
+        .btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 12px;
+        }
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        .refuse {
+            background: #ed4040;
+        }
+        .accept {
+            background: #07c160;
+        }
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 初始配置页面 -->
+<div class="setup-box" id="setupPage">
+    <h2 class="setup-title">来电参数设置</h2>
+
+    <div class="item-group">
+        <label>上传自定义头像</label>
+        <input type="file" id="avatarFile" accept="image/*">
+        <img class="preview-avatar" id="avatarPreview">
+    </div>
+
+    <div class="item-group">
+        <label>对方昵称</label>
+        <input type="text" id="userName" placeholder="请输入来电名字">
+    </div>
+
+    <div class="item-group">
+        <label>通话音频直链URL（接听后播放）</label>
+        <input type="text" id="audioUrl" placeholder="粘贴mp3网络地址">
+    </div>
+
+    <div class="item-group">
+        <label>来电铃声直链URL（响铃直到接听/挂断）</label>
+        <input type="text" id="ringUrl" placeholder="粘贴来电铃声mp3地址">
+    </div>
+
+    <button id="confirmBtn">确认进入来电界面</button>
+</div>
+
+<!-- 微信来电全屏页面 -->
+<div class="call-box" id="callPage">
+    <img class="avatar" id="callAvatar">
+    <div class="name" id="callName">微信用户</div>
+    <div class="tip">正在来电...</div>
+
+    <div class="btn-group">
+        <button class="btn" id="refuseBtn">
+            <div class="icon-circle refuse">📞</div>
+            <span>挂断</span>
+        </button>
+        <button class="btn" id="acceptBtn">
+            <div class="icon-circle accept">📞</div>
+            <span>接听</span>
+        </button>
+    </div>
+
+    <!-- 两个音频：铃声 + 通话语音 -->
+    <audio id="ringAudio" loop>
+    <audio id="talkAudio">
+</div>
+
+<script>
+// DOM元素
+const setupPage = document.getElementById('setupPage');
+const callPage = document.getElementById('callPage');
+const confirmBtn = document.getElementById('confirmBtn');
+
+const avatarFile = document.getElementById('avatarFile');
+const avatarPreview = document.getElementById('avatarPreview');
+const userNameInput = document.getElementById('userName');
+const audioUrlInput = document.getElementById('audioUrl');
+const ringUrlInput = document.getElementById('ringUrl');
+
+const callAvatar = document.getElementById('callAvatar');
+const callName = document.getElementById('callName');
+const callTip = callPage.querySelector('.tip');
+
+const ringAudio = document.getElementById('ringAudio');
+const talkAudio = document.getElementById('talkAudio');
+const refuseBtn = document.getElementById('refuseBtn');
+const acceptBtn = document.getElementById('acceptBtn');
+
+// 实时预览头像
+avatarFile.addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(res){
+        avatarPreview.src = res.target.result;
+    }
+    reader.readAsDataURL(file);
+})
+
+// 确认跳转来电页
+confirmBtn.addEventListener('click', function(){
+    const name = userNameInput.value.trim();
+    const talkUrl = audioUrlInput.value.trim();
+    const ringUrl = ringUrlInput.value.trim();
+
+    if(!name){
+        alert('请填写来电昵称');
+        return;
+    }
+    if(!ringUrl){
+        alert('请填写来电铃声链接');
+        return;
+    }
+    if(!talkUrl){
+        alert('请填写接听后播放的音频链接');
+        return;
+    }
+
+    // 赋值数据
+    callName.innerText = name;
+    ringAudio.src = ringUrl;
+    talkAudio.src = talkUrl;
+
+    // 头像赋值
+    if(avatarPreview.src){
+        callAvatar.src = avatarPreview.src;
+    }
+
+    // 切换页面，开始响铃
+    setupPage.style.display = 'none';
+    callPage.style.display = 'flex';
+    ringAudio.play();
+})
+
+// 挂断：停止所有音频，返回设置页
+refuseBtn.addEventListener('click', ()=>{
+    ringAudio.pause();
+    ringAudio.currentTime = 0;
+    talkAudio.pause();
+    talkAudio.currentTime = 0;
+    callPage.style.display = 'none';
+    setupPage.style.display = 'flex';
+})
+
+// 接听：关闭铃声，播放通话音频
+acceptBtn.addEventListener('click', ()=>{
+    ringAudio.pause();
+    ringAudio.currentTime = 0;
+    talkAudio.play();
+    callTip.innerText = '通话中...';
+    acceptBtn.disabled = true;
+})
+</script>
+</body>
+</html>
