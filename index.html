@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>空铭工具箱</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, sans-serif;
+    /* 清除全局点击蓝色高亮 */
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #f4f5f7;
+    padding: 16px;
+}
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+/* 头部标题区域 */
+.header-box {
+    text-align: center;
+    padding: 30px 0;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #2979ff, #42a5f5);
+    border-radius: 16px;
+    color: white;
+}
+.header-box h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+.header-box p {
+    opacity: 0.9;
+    font-size: 15px;
+}
+
+/* 工具卡片网格布局 */
+.tool-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.tool-card {
+    background: #ffffff;
+    padding: 20px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    /* 单独给卡片禁用点击高亮兜底 */
+    -webkit-tap-highlight-color: transparent;
+}
+.tool-card:active {
+    transform: scale(0.97);
+    background: #f0f7ff;
+}
+.tool-card h3 {
+    font-size: 16px;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+.tool-card small {
+    color: #888;
+    font-size: 12px;
+}
+
+/* 底部免责声明 */
+.footer-text {
+    margin-top: 50px;
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    line-height: 1.6;
+    padding-bottom: 20px;
+}
+</style>
+</head>
+<body>
+
+<div class="header-box">
+    <h1>空铭工具箱</h1>
+    <p>个人独立原创开发 · 一键直达</p>
+</div>
+
+<div class="tool-container">
+    <div class="tool-card" onclick="location.href='B站作品抓取.html'">
+        <h3>B站作品抓取</h3>
+        <small>数据提取工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='公众号生成器.html'">
+        <h3>公众号生成器</h3>
+        <small>文案排版工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='审核时长.html'">
+        <h3>审核时长</h3>
+        <small>预估查询工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='密码强度测试.html'">
+        <h3>密码强度测试</h3>
+        <small>安全检测工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='快递物流生成.html'">
+        <h3>快递物流生成</h3>
+        <small>物流模拟工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='百科词条生成.html'">
+        <h3>百科词条生成</h3>
+        <small>文案生成工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='短信模拟.html'">
+        <h3>短信模拟</h3>
+        <small>短信界面生成</small>
+    </div>
+    <div class="tool-card" onclick="location.href='立场.html'">
+        <h3>政治立场测试</h3>
+        <small>立场测试工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='笔记本.html'">
+        <h3>在线笔记本</h3>
+        <small>云端记事工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='聊天记录生成.html'">
+        <h3>聊天记录生成</h3>
+        <small>对话截图模拟</small>
+    </div>
+    <div class="tool-card" onclick="location.href='视频潜力测试.html'">
+        <h3>视频潜力测试</h3>
+        <small>流量预判工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='视频质量分析.html'">
+        <h3>视频质量分析</h3>
+        <small>画质检测工具</small>
+    </div>
+    <div class="tool-card" onclick="location.href='转账成功.html'">
+        <h3>转账成功模拟</h3>
+        <small>支付界面生成</small>
+    </div>
+    <div class="tool-card" onclick="location.href='轻编辑器.html'">
+        <h3>轻编辑器</h3>
+        <small>简易代码编辑</small>
+    </div>
+    <div class="tool-card" onclick="location.href='限流检测.html'">
+        <h3>限流检测</h3>
+        <small>账号状态查询</small>
+    </div>
+</div>
+
+<div class="footer-text">
+全部内容仅为娱乐虚构用途，请勿用于诈骗、造假等违法行为，一切后果自行承担
+</div>
+
+</body>
+</html>

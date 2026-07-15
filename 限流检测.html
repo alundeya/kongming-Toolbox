@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>作品限流分析_空铭工具箱</title>
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",PingFang SC,Microsoft YaHei,sans-serif;
+}
+body{
+  background:#f5f5f5;
+  padding:24px 16px;
+}
+.wrapper{
+  max-width:600px;
+  margin:0 auto;
+}
+.title{
+  font-size:18px;
+  color:#333;
+  text-align:center;
+  margin-bottom:20px;
+  font-weight:500;
+}
+.card{
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+  box-shadow:0 1px 6px rgba(0,0,0,0.05);
+}
+.form-item{
+  border-bottom:1px solid #eee;
+  padding:14px 0;
+}
+.form-item:last-of-type{
+  border-bottom:none;
+}
+.form-item label{
+  display:block;
+  font-size:14px;
+  color:#666;
+  margin-bottom:8px;
+}
+.form-item input,
+.form-item select{
+  width:100%;
+  border:none;
+  outline:none;
+  font-size:16px;
+  padding:8px 0;
+  color:#333;
+  background:transparent;
+}
+input::placeholder{
+  color:#c8c9cc;
+}
+#checkBtn{
+  width:100%;
+  background:#07c160;
+  color:#fff;
+  border:none;
+  padding:12px;
+  border-radius:8px;
+  font-size:16px;
+  margin-top:20px;
+  cursor:pointer;
+}
+#checkBtn:active{
+  opacity:0.85;
+}
+.result-area{
+  margin-top:20px;
+  padding:16px;
+  background:#fafafa;
+  border-radius:8px;
+  display:none;
+}
+.result-title{
+  font-size:16px;
+  font-weight:500;
+  margin-bottom:10px;
+}
+.result-desc{
+  font-size:15px;
+  color:#555;
+  line-height:1.7;
+}
+.tip-small{
+  margin-top:8px;
+  font-size:13px;
+  color:#999;
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="title">作品是否限流喵_空铭工具箱</div>
+  <div class="card">
+    <div class="form-item">
+      <label>选择平台</label>
+      <select id="platform">
+        <option value="bilibili">哔哩哔哩 B站</option>
+        <option value="douyin">抖音</option>
+        <option value="kuaishou">快手</option>
+      </select>
+    </div>
+
+    <div class="form-item">
+      <label>视频标题</label>
+      <input type="text" id="title" placeholder="输入作品标题">
+    </div>
+
+    <div class="form-item">
+      <label>当前播放量</label>
+      <input type="number" id="play" placeholder="纯数字，不要带单位">
+    </div>
+
+    <div class="form-item">
+      <label>UP主总粉丝数</label>
+      <input type="number" id="fans" placeholder="账号全部粉丝数量">
+    </div>
+
+    <div class="form-item">
+      <label>账号总作品数量</label>
+      <input type="number" id="works" placeholder="一共发布了多少条视频">
+    </div>
+
+    <button id="checkBtn">开始检测限流状态</button>
+
+    <div class="result-area" id="resultBox">
+      <div class="result-title" id="levelText"></div>
+      <div class="result-desc" id="detailText"></div>
+      <div class="tip-small" id="extraTip"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const checkBtn = document.getElementById('checkBtn');
+const resultBox = document.getElementById('resultBox');
+const levelText = document.getElementById('levelText');
+const detailText = document.getElementById('detailText');
+const extraTip = document.getElementById('extraTip');
+
+// 三套平台流量阈值配置
+const platformRule = {
+  bilibili:{
+    normalRate: 0.08,
+    lightLimit: 0.04,
+    midLimit: 0.015,
+    heavyLimit: 0.005,
+    name:'哔哩哔哩'
+  },
+  douyin:{
+    normalRate: 0.35,
+    lightLimit: 0.15,
+    midLimit: 0.05,
+    heavyLimit: 0.01,
+    name:'抖音'
+  },
+  kuaishou:{
+    normalRate: 0.25,
+    lightLimit: 0.12,
+    midLimit: 0.04,
+    heavyLimit: 0.008,
+    name:'快手'
+  }
+};
+
+checkBtn.addEventListener('click',()=>{
+  const platform = document.getElementById('platform').value;
+  const title = document.getElementById('title').value.trim();
+  const play = Number(document.getElementById('play').value);
+  const fans = Number(document.getElementById('fans').value);
+  const works = Number(document.getElementById('works').value);
+
+  if(!title || isNaN(play) || isNaN(fans) || isNaN(works) || play<=0 || fans<=0 || works<=0){
+    alert('请完整填写所有信息，数字必须大于0');
+    return;
+  }
+
+  // 核心两个判定维度
+  const playRate = play / fans; // 播放粉丝转化率
+  const workPerFan = works / fans; // 单个粉丝对应的作品总量（关键新增判断）
+  const rule = platformRule[platform];
+
+  let level,color,desc,tip = '';
+
+  // 优先判定：账号异常高产（单粉丝对应作品超过50条，直接判定限流账号）
+  if(workPerFan > 50){
+    level = '🔴 重度限流 / 账号被风控标记';
+    color = '#fa5151';
+    desc = `该账号平均每1个粉丝对应${workPerFan.toFixed(1)}条作品，属于平台判定的批量刷屏、搬运矩阵账号，系统会长期压低自然推荐。`;
+    tip = '建议：删除低质重复作品，停止日更多条，专注原创内容养号。';
+  }else if(playRate >= rule.normalRate){
+    level = '✅ 正常流量，未被限流';
+    color = '#07c160';
+    desc = `${rule.name}平台下，该视频播放/粉丝比例处于健康区间，平台推荐分发正常，可以继续正常更新内容。`;
+  }else if(playRate >= rule.lightLimit){
+    level = '⚠️ 轻度限流';
+    color = '#ff9500';
+    desc = `轻微流量压制，大概率是内容标签不精准、标题关键词匹配度低，优化封面和标题即可恢复推荐。`;
+  }else if(playRate >= rule.midLimit){
+    level = '🟠 中度限流';
+    color = '#ff6b35';
+    desc = `推荐池明显缩减，检查是否存在违规词、同质化搬运、频繁删改作品，建议暂停连续发稿，养号2~3天。`;
+  }else{
+    level = '🔴 重度限流 / 几乎被屏蔽';
+    color = '#fa5151';
+    desc = `流量已经被平台严重限制，大概率触发风控审核，检查是否含有敏感内容、导流信息、重复抄袭内容。`;
+  }
+
+  resultBox.style.display = 'block';
+  levelText.style.color = color;
+  levelText.innerText = level;
+  detailText.innerText = desc;
+  extraTip.innerText = tip;
+})
+</script>
+</body>
+</html>

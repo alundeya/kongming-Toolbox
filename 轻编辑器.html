@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 修正viewport缩放锁定，完美适配手机屏幕 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Markdown编辑器_空铭工具箱</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",Helvetica,"Microsoft YaHei",sans-serif;}
+html,body{
+    background:#ffffff;
+    color:#333;
+    font-size:15px;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+}
+.container{
+    max-width:750px;
+    margin:0 auto;
+    padding:12px;
+    background:#fff;
+    width:100%;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.top-bar{display:flex;gap:10px;flex-wrap:wrap;}
+button{
+    padding:10px 16px;
+    border:none;
+    border-radius:8px;
+    background:#2d80eb;
+    color:#fff;
+    font-size:14px;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(45,128,235,0.2);
+    transition: transform 0.15s ease;
+}
+button:active{transform: scale(0.97);}
+button.secondary{background:#eee;color:#333;box-shadow:none;}
+
+/* ==========核心布局修改========== */
+.box-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:1;
+    min-height:0;
+}
+/* 大屏桌面端才切换左右分栏 */
+@media (min-width:600px){
+    .box-wrap{
+        flex-direction:row;
+    }
+    .edit-box, .preview-box{
+        flex:1;
+    }
+}
+
+.edit-box,.preview-box{
+    border:1px solid #e5e5e5;
+    border-radius:6px;
+    padding:12px;
+    /* 移动端编辑框自适应内容高度，预览框占据剩下全部高度 */
+    flex-shrink:0;
+    /* 顺滑滚动配置 */
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    will-change: scroll-position;
+}
+/* 手机竖屏：编辑框高度自适应内容，预览框填满剩余空间 */
+@media (max-width:599px) {
+    .edit-box{
+        max-height: 40vh;
+    }
+    .preview-box{
+        flex:1;
+    }
+}
+
+textarea{
+    width:100%;
+    height:100%;
+    border:none;
+    outline:none;
+    font-size:15px;
+    line-height:1.7;
+    resize:none;
+    background:transparent;
+    will-change: contents;
+}
+#preview{
+    line-height:1.8;
+    font-size:15px;
+    will-change: contents;
+}
+#preview h1{font-size:24px;margin:16px 0 8px;border-bottom:1px solid #eee;padding-bottom:6px;}
+#preview h2{font-size:20px;margin:14px 0 6px;border-left:4px solid #2d80eb;padding-left:10px;}
+#preview h3{font-size:17px;margin:12px 0 4px;}
+#preview p{margin-bottom:12px;}
+#preview blockquote{border-left:4px solid #ccc;padding:8px 12px;background:#f8f9fa;margin:12px 0;color:#444;}
+#preview code{background:#f1f1f1;padding:2px 4px;border-radius:3px;font-family:monospace;}
+#preview ul,#preview ol{padding-left:24px;margin:12px 0;}
+.save-tip{color:#999;font-size:12px;margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="top-bar">
+        <button onclick="downloadMD()">导出MD文件</button>
+        <button class="secondary" onclick="clearAll()">清空内容</button>
+        <button class="secondary" onclick="resetDraft()">恢复上次草稿</button>
+    </div>
+    <div class="save-tip">内容自动实时保存在浏览器本地，刷新不会丢失</div>
+    <div class="box-wrap">
+        <div class="edit-box">
+            <textarea id="mdInput" placeholder="在这里输入Markdown内容
+# 一级标题....
+## 二级标题
+> 引用文本
+- 无序列表
+1. 有序列表
+**加粗文字** *斜体文字*"></textarea>
+        </div>
+        <div class="preview-box">
+            <div id="preview"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const mdInput = document.getElementById('mdInput');
+const preview = document.getElementById('preview');
+const STORAGE_KEY = 'km-markdown-draft';
+let renderTimer = null;
+
+// 初始化读取本地缓存
+window.onload = ()=>{
+    const oldText = localStorage.getItem(STORAGE_KEY);
+    if(oldText) mdInput.value = oldText;
+    renderPreview();
+}
+
+// 防抖节流渲染，避免频繁输入造成页面卡顿
+mdInput.addEventListener('input',()=>{
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(()=>{
+        localStorage.setItem(STORAGE_KEY, mdInput.value);
+        requestAnimationFrame(renderPreview);
+    }, 120);
+})
+
+// Markdown转HTML渲染
+function renderPreview(){
+    preview.innerHTML = marked.parse(mdInput.value);
+}
+
+// 导出为 .md 文件
+function downloadMD(){
+    const blob = new Blob([mdInput.value],{type:'text/markdown'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '文档_'+new Date().getTime()+'.md';
+    a.click();
+}
+
+// 清空编辑器
+function clearAll(){
+    if(confirm('确定要清空全部内容吗？')){
+        mdInput.value = '';
+        localStorage.removeItem(STORAGE_KEY);
+        renderPreview();
+    }
+}
+
+// 恢复草稿
+function resetDraft(){
+    const oldText = localStorage.getItem(STORAGE_KEY);
+    if(oldText){
+        mdInput.value = oldText;
+        renderPreview();
+    }else{
+        alert('暂无保存的草稿');
+    }
+}
+</script>
+</body>
+</html>

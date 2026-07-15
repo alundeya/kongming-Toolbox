@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>百科词条生成_空铭工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",Helvetica,"Microsoft YaHei",sans-serif;}
+html,body{background:#ffffff;color:#333;font-size:15px;}
+.container{max-width:750px;margin:0 auto;padding:12px;background:#fff;}
+.control-box{background:#ffffff;padding:16px;margin-bottom:16px;}
+.control-box input, .control-box textarea{
+    width:100%;
+    padding:12px;border:1px solid #e5e5e5;border-radius:6px;margin-bottom:12px;outline:none;font-size:15px;
+}
+.control-box textarea{min-height:120px;resize:vertical;}
+button{width:100%;padding:12px;border:none;border-radius:8px;background:#2d80eb;color:#fff;font-size:15px;cursor:pointer;box-shadow:0 2px 8px rgba(45,128,235,0.2);}
+
+/* 百科预览卡片 */
+.wiki-card{background:#ffffff;overflow:hidden;display:none;}
+.wiki-body{padding:24px 20px 35px;}
+.wiki-title{font-size:26px;line-height:1.4;font-weight:bold;margin-bottom:12px;color:#111;border-bottom:1px solid #eee;padding-bottom:10px;}
+.wiki-info{font-size:13px;color:#666;margin-bottom:20px;line-height:1.6;}
+.wiki-summary{background:#f8f9fa;padding:14px;border-radius:6px;margin-bottom:24px;color:#444;line-height:1.7;}
+.wiki-section{margin-bottom:22px;}
+.wiki-h2{font-size:19px;font-weight:bold;margin:14px 0 8px;color:#222;border-left:4px solid #2d80eb;padding-left:10px;}
+.wiki-content{font-size:16px;line-height:1.8;color:#333;word-break:break-all;}
+.wiki-content p{margin-bottom:14px;}
+.wiki-copyright{margin-top:40px;padding-top:15px;border-top:1px solid #eee;font-size:12px;color:#aaa;text-align:center;}
+</style>
+</head>
+<body>
+<div class="container">
+    <!-- 编辑面板 -->
+    <div class="control-box" id="editPanel">
+        <input id="wikiName" placeholder="词条名称（如：人工智能）" value="">
+        <input id="wikiMeta" placeholder="基础信息（分类、创建时间、别称等）" value="">
+        <textarea id="wikiBrief" placeholder="词条简介（百科概述内容）"></textarea>
+        <textarea id="wikiText" placeholder="正文内容，换行可作为新段落，## 开头会自动转为二级标题
+## 二级标题
+这里填写内容
+
+## 二级标题
+这里填写内容"></textarea>
+        <button onclick="submitJump()">生成预览</button>
+    </div>
+
+    <!-- 纯净百科展示页 -->
+    <div class="wiki-card" id="wikiWrap">
+        <div class="wiki-body">
+            <h1 class="wiki-title" id="showTitle"></h1>
+            <div class="wiki-info" id="showMeta"></div>
+            <div class="wiki-summary" id="showBrief"></div>
+            <div class="wiki-content" id="showContent"></div>
+            <div class="wiki-copyright">
+                空铭工具箱 · 原创工具
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const urlParams = new URLSearchParams(location.search);
+const wikiId = urlParams.get('id');
+
+// 本地存储读写
+function getWikiList(){
+    return JSON.parse(localStorage.getItem('baiduWikiList')) || [];
+}
+function saveWikiList(list){
+    localStorage.setItem('baiduWikiList', JSON.stringify(list));
+}
+
+// 提交保存并跳转
+function submitJump(){
+    const name = document.getElementById('wikiName').value.trim();
+    const meta = document.getElementById('wikiMeta').value.trim();
+    const brief = document.getElementById('wikiBrief').value.trim();
+    const text = document.getElementById('wikiText').value.trim();
+
+    if(!name || !brief || !text){
+        alert('请完善词条名称、简介和正文内容');
+        return;
+    }
+
+    const id = Date.now().toString();
+    const wikiData = {
+        id,
+        name,
+        meta,
+        brief,
+        text
+    };
+
+    const list = getWikiList();
+    list.push(wikiData);
+    saveWikiList(list);
+
+    location.href = `?id=${id}`;
+}
+function parseWikiText(str){
+    return str.split('\n').filter(item=>item.trim()!=='').map(line=>{
+        if(line.startsWith('## ')){
+            return `<h2 class="wiki-h2">${line.replace('## ','')}</h2>`;
+        }else{
+            return `<p>${line}</p>`;
+        }
+    }).join('');
+}
+if(wikiId){
+    document.getElementById('editPanel').style.display = 'none';
+    document.getElementById('wikiWrap').style.display = 'block';
+
+    const list = getWikiList();
+    const target = list.find(item => item.id === wikiId);
+    if(!target){
+        alert('词条不存在，返回编辑页');
+        location.href = location.pathname;
+    }else{
+        document.getElementById('showTitle').innerText = target.name;
+        document.getElementById('showMeta').innerText = target.meta || '暂无基础信息';
+        document.getElementById('showBrief').innerText = target.brief;
+        document.getElementById('showContent').innerHTML = parseWikiText(target.text);
+    }
+}
+</script>
+</body>
+</html>

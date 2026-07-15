@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>快递物流生成器_空铭工具箱</title>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",Helvetica,"Microsoft YaHei",sans-serif;}
+html,body{background:#f5f7fa;color:#333;height:100vh;display:flex;flex-direction:column;}
+.container{max-width:720px;margin:0 auto;width:100%;padding:12px;display:flex;flex-direction:column;gap:14px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
+.card{background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:14px;}
+.flex-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+input,select,textarea{
+    flex:1;min-width:200px;padding:10px 12px;border:1px solid #ddd;border-radius:6px;outline:none;font-size:14px;
+}
+textarea{min-height:80px;resize:vertical;white-space:pre-wrap;}
+.btn{
+    padding:10px 18px;border:none;border-radius:6px;background:#2d80eb;color:#fff;cursor:pointer;transition:0.15s ease;
+}
+.btn:active{transform:scale(0.96);}
+.btn-gray{background:#e5e7eb;color:#333;}
+.title{font-size:16px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #eee;}
+
+/* 物流轨迹预览样式（复刻主流快递APP界面） */
+.track-preview{margin-top:10px;padding-top:16px;border-top:1px dashed #ddd;}
+.track-header{display:flex;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid #eee;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.track-info p{font-size:14px;margin:4px 0;color:#555;}
+.track-info strong{color:#222;font-size:15px;}
+
+/* 物流时间线 */
+.timeline{position:relative;padding-left:26px;}
+.timeline::before{
+    content:"";position:absolute;left:6px;top:0;bottom:0;width:2px;background:#d1d5db;
+}
+.timeline-item{position:relative;padding-bottom:22px;}
+.timeline-dot{
+    position:absolute;left:-26px;top:4px;width:14px;height:14px;border-radius:50%;background:#2d80eb;border:2px solid #fff;z-index:2;
+}
+.timeline-item:last-child .timeline-dot{background:#10b981;}
+.timeline-time{font-size:12px;color:#888;margin-bottom:4px;}
+.timeline-desc{font-size:14px;line-height:1.6;}
+
+.operate-bar{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.save-tip{font-size:12px;color:#999;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="title">快递基础信息</div>
+        <div class="flex-row" style="margin-bottom:10px;">
+            <select id="expressCompany">
+                <option value="中通快递">中通快递</option>
+                <option value="圆通速递">圆通速递</option>
+                <option value="韵达快递">韵达快递</option>
+                <option value="申通快递">申通快递</option>
+                <option value="顺丰速运">顺丰速运</option>
+                <option value="京东物流">京东物流</option>
+                <option value="极兔快递">极兔快递</option>
+                <option value="邮政EMS">邮政EMS</option>
+                <option value="其他">自定义快递公司</option>
+            </select>
+            <input type="text" id="expressNo" placeholder="输入快递单号" value="YT1234567890">
+        </div>
+        <div class="flex-row" style="margin-bottom:10px;">
+            <input type="text" id="sendAddr" placeholder="寄件人地址" value="">
+            <input type="text" id="recvAddr" placeholder="收件人地址" value="">
+        </div>
+    </div>
+    <div class="card">
+        <div class="title">物流节点编辑（格式：时间|物流详情，一行一条，支持手动任意修改）</div>
+        <textarea id="trackContent" placeholder="示例格式：
+2026-07-15 09:22|快件已签收，签收人：本人
+2026-07-15 08:10|快递员正在派送中
+2026-07-14 20:45|到达【深圳宝安转运中心】
+2026-07-13 18:30|离开【上海转运中心】发往深圳
+2026-07-13 10:15|快递员已揽收">2026-07-15 09:22|快件已签收，签收人：本人
+2026-07-15 08:10|快递员正在派送中
+2026-07-14 20:45|到达【深圳宝安转运中心】
+2026-07-13 18:30|离开【上海转运中心】发往深圳
+2026-07-13 10:15|快递员已揽收</textarea>
+        <div class="operate-bar">
+            <button class="btn" onclick="renderTrack()">手动刷新预览</button>
+            <button class="btn btn-gray" onclick="autoFill()">一键生成标准物流模板</button>
+            <button class="btn btn-gray" onclick="exportLog()">导出物流记录TXT</button>
+            <button class="btn btn-gray" onclick="resetAll()">重置全部内容</button>
+        </div>
+        <div class="save-tip">所有内容自动保存在浏览器本地，刷新页面不会丢失，修改输入框内容会自动更新预览</div>
+    </div>
+
+    <!-- 预览区域 -->
+    <div class="card track-preview" id="previewBox">
+        <div class="track-header">
+            <div class="track-info">
+                <p>快递公司：<strong id="previewCompany">圆通速递</strong></p>
+                <p>运单编号：<strong id="previewNo">YT1234567890</strong></p>
+            </div>
+            <div class="track-info">
+                <p>寄件：<span id="previewSend"></span></p>
+                <p>收件：<span id="previewRecv"></span></p>
+            </div>
+        </div>
+        <div class="timeline" id="timelineWrap"></div>
+    </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'km-express-log';
+// 获取所有输入元素
+const expressCompany = document.getElementById('expressCompany');
+const expressNo = document.getElementById('expressNo');
+const sendAddr = document.getElementById('sendAddr');
+const recvAddr = document.getElementById('recvAddr');
+const trackContent = document.getElementById('trackContent');
+
+// 防抖函数，避免频繁渲染卡顿
+let renderTimer = null;
+function debounceRender(){
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(()=>{
+        renderTrack();
+    }, 150);
+}
+
+// 给全部输入框绑定输入事件，修改即自动刷新预览
+expressCompany.addEventListener('input', debounceRender);
+expressNo.addEventListener('input', debounceRender);
+sendAddr.addEventListener('input', debounceRender);
+recvAddr.addEventListener('input', debounceRender);
+trackContent.addEventListener('input', debounceRender);
+
+// 页面加载读取本地缓存
+window.onload = ()=>{
+    const cache = localStorage.getItem(STORAGE_KEY);
+    if(cache){
+        const data = JSON.parse(cache);
+        expressCompany.value = data.company;
+        expressNo.value = data.no;
+        sendAddr.value = data.send;
+        recvAddr.value = data.recv;
+        trackContent.value = data.track;
+    }
+    renderTrack();
+}
+
+// 渲染物流时间线
+function renderTrack(){
+    const company = expressCompany.value;
+    const no = expressNo.value.trim();
+    const send = sendAddr.value.trim();
+    const recv = recvAddr.value.trim();
+    const trackText = trackContent.value;
+    const lines = trackText.split('\n').filter(item=>item.trim()!=='');
+
+    // 更新头部预览信息
+    document.getElementById('previewCompany').innerText = company;
+    document.getElementById('previewNo').innerText = no;
+    document.getElementById('previewSend').innerText = send;
+    document.getElementById('previewRecv').innerText = recv;
+
+    // 生成时间线DOM
+    let timelineHtml = '';
+    lines.forEach(line=>{
+        const splitIndex = line.indexOf('|');
+        if(splitIndex <= 0) return;
+        const time = line.slice(0,splitIndex).trim();
+        const desc = line.slice(splitIndex+1).trim();
+        timelineHtml += `
+        <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-time">${time}</div>
+            <div class="timeline-desc">${escapeHtml(desc)}</div>
+        </div>
+        `;
+    })
+    document.getElementById('timelineWrap').innerHTML = timelineHtml;
+
+    // 自动保存本地
+    saveLocal({company,no,send,recv,track:trackText});
+}
+
+// 保存到LocalStorage
+function saveLocal(obj){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+}
+
+// HTML转义防XSS
+function escapeHtml(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 自动填充标准物流流程模板（修复dayjs不可变对象BUG）
+function autoFill(){
+    const now = dayjs();
+    // 正确链式赋值，每次生成新日期对象
+    const time1 = now.subtract(2, 'day').format('YYYY-MM-DD HH:mm');
+    const time2 = now.subtract(2, 'day').add(8, 'hour').format('YYYY-MM-DD HH:mm');
+    const time3 = now.subtract(1, 'day').add(10, 'hour').format('YYYY-MM-DD HH:mm');
+    const time4 = now.subtract(1, 'day').add(16, 'hour').format('YYYY-MM-DD HH:mm');
+    const time5 = now.format('YYYY-MM-DD HH:mm');
+
+    const template = `${time5}|快件已正常签收，签收类型：小偷签收了你的快递
+${time4}|快件分配至派送员，即将配送
+${time3}|抵达【深圳宝安转运中心】，准备分拣
+${time2}|离开【上海转运中心】，发往【深圳转运中心】
+${time1}|快递员【雨姐】上门揽收，已录入系统`;
+
+    trackContent.value = template;
+    renderTrack();
+}
+
+// 导出物流记录为TXT
+function exportLog(){
+    const content = `快递公司：${expressCompany.value}
+运单号：${expressNo.value}
+寄件地址：${sendAddr.value}
+收件地址：${recvAddr.value}
+====================物流轨迹====================
+${trackContent.value}`;
+    const blob = new Blob([content],{type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `快递物流记录_${Date.now()}.txt`;
+    a.click();
+}
+
+// 重置清空
+function resetAll(){
+    if(confirm('确认清空所有快递信息？')){
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+    }
+}
+</script>
+</body>
+</html>

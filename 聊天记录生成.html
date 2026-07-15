@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>聊天记录生成器_空铭工具箱</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, "Microsoft Yahei", sans-serif;
+}
+body{
+    background-color: #f7f8fa;
+    padding: 16px;
+}
+.page-title{
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #1f2937;
+}
+/* 布局：移动端上下堆叠，PC端左右并排 */
+.main-wrap{
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+}
+@media (max-width: 860px) {
+    .main-wrap{
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 左侧编辑卡片通用样式 */
+.card{
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+}
+.card-title{
+    font-size: 16px;
+    font-weight: 500;
+    color: #06b46c;
+    border-left: 4px solid #06b46c;
+    padding-left: 10px;
+    margin-bottom: 16px;
+}
+.form-row{
+    margin-bottom: 14px;
+}
+.form-row label{
+    display: block;
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 6px;
+}
+.form-row input,
+.form-row select,
+.form-row textarea{
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    transition: border 0.2s;
+}
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus{
+    border-color: #06b46c;
+}
+textarea{
+    min-height: 80px;
+    resize: vertical;
+}
+.file-input-wrap{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+.file-input{
+    flex: 1;
+}
+
+/* 按钮组样式 */
+.btn-group{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+button{
+    padding: 11px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+button:active{
+    opacity: 0.85;
+}
+.btn-green{
+    background-color: #07c160;
+    color: white;
+}
+.btn-gray{
+    background-color: #6b7280;
+    color: white;
+}
+.btn-orange{
+    background-color: #f97316;
+    color: white;
+}
+.btn-blue{
+    background-color: #2563eb;
+    color: white;
+}
+.btn-red{
+    background-color: #ef4444;
+    color: white;
+}
+
+/* 右侧手机预览容器 */
+.phone-shell{
+    width: 320px;
+    margin: 0 auto;
+    background: #000000;
+    border-radius: 40px;
+    padding: 10px;
+    overflow: hidden;
+}
+.status-bar{
+    background: #ededed;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 14px;
+    font-size: 13px;
+}
+.chat-top-bar{
+    background: #ededed;
+    text-align: center;
+    padding: 12px;
+    font-weight: 500;
+    border-bottom: 1px solid #ddd;
+}
+.chat-container{
+    background: #e9e9eb;
+    min-height: 580px;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+/* 聊天消息气泡样式 */
+.msg-item{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.msg-self{
+    flex-direction: row-reverse;
+}
+.avatar{
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    object-fit: cover;
+    background: #cccccc;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: bold;
+}
+.msg-content-wrap{
+    max-width: 72%;
+}
+.msg-time-text{
+    font-size: 11px;
+    color: #999;
+    text-align: center;
+    margin: 4px 0;
+}
+.bubble-normal{
+    padding: 10px 14px;
+    border-radius: 7px;
+    word-break: break-all;
+}
+.msg-other .bubble-normal{
+    background: #ffffff;
+    border-top-left-radius: 0;
+}
+.msg-self .bubble-normal{
+    background: #95ec69;
+    border-top-right-radius: 0;
+}
+
+/* 特殊消息样式 */
+.bubble-redpack{
+    background: #f25a5a;
+    color: #fff;
+    padding: 12px;
+    border-radius: 7px;
+    width: 170px;
+}
+.bubble-transfer{
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 12px;
+    border-radius: 7px;
+    width: 190px;
+}
+.bubble-voice{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border-radius: 7px;
+    min-width: 90px;
+}
+.bubble-img{
+    max-width: 150px;
+    border-radius: 7px;
+}
+</style>
+</head>
+<body>
+    <h1 class="page-title">全能微信聊天记录生成器</h1>
+    <div class="main-wrap">
+        <!-- 左侧编辑区域 -->
+        <div class="edit-column">
+            <!-- 状态栏设置卡片 -->
+            <div class="card">
+                <h2 class="card-title">手机状态栏设置</h2>
+                <div class="form-row">
+                    <label>左上角时间</label>
+                    <input type="text" id="statusTime" value="12:30">
+                </div>
+                <div class="form-row">
+                    <label>运营商文字</label>
+                    <input type="text" id="statusNet" value="中国移动">
+                </div>
+            </div>
+
+            <!-- 双方头像昵称卡片 -->
+            <div class="card">
+                <h2 class="card-title">双方信息设置（自定义头像）</h2>
+                <div class="form-row">
+                    <label>我方昵称（绿色气泡）</label>
+                    <input type="text" id="nameSelf" value="我">
+                    <div class="file-input-wrap">
+                        <input class="file-input" type="file" id="avatarSelf" accept="image/*">
+                        <span>上传我方头像</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>对方昵称（白色气泡）</label>
+                    <input type="text" id="nameOther" value="好友">
+                    <div class="file-input-wrap">
+                        <input class="file-input" type="file" id="avatarOther" accept="image/*">
+                        <span>上传对方头像</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 单条消息添加 -->
+            <div class="card">
+                <h2 class="card-title">单条消息添加</h2>
+                <div class="form-row">
+                    <label>发送方</label>
+                    <select id="sender">
+                        <option value="self">我（绿色）</option>
+                        <option value="other">对方（白色）</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>消息类型</label>
+                    <select id="msgType">
+                        <option value="text">普通文字</option>
+                        <option value="redpack">微信红包</option>
+                        <option value="transfer">转账</option>
+                        <option value="image">图片消息</option>
+                        <option value="voice">语音消息</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>内容/备注</label>
+                    <textarea id="msgText" placeholder="文字内容 / 红包备注 / 转账金额备注"></textarea>
+                </div>
+                <div class="form-row">
+                    <label>语音时长(秒) / 图片上传</label>
+                    <input type="number" id="voiceLen" placeholder="仅语音填写数字秒数">
+                    <div class="file-input-wrap" style="margin-top:6px;">
+                        <input class="file-input" type="file" id="imgUpload" accept="image/*">
+                        <span>选择图片文件</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>消息时间（选填，如 21:30）</label>
+                    <input type="text" id="msgTime" placeholder="留空则不显示时间">
+                </div>
+                <div class="btn-group">
+                    <button class="btn-green" id="addMsg">追加这条消息</button>
+                    <button class="btn-gray" id="clearList">清空聊天列表</button>
+                </div>
+            </div>
+
+            <!-- 批量导入模块 -->
+            <div class="card">
+                <h2 class="card-title">批量导入聊天记录</h2>
+                <div class="form-row">
+                    <label>导入格式（每行一条）<br>示例：self|18:20|你好呀  || other|18:21|挺好的</label>
+                    <textarea id="batchText" placeholder="发送方(self/other)|时间|内容"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-orange" id="importBatch">批量导入</button>
+                    <button class="btn-blue" id="exportImg">导出整屏为图片</button>
+                    <button class="btn-red" id="resetAll">全部重置</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧手机预览 -->
+        <div class="preview-column">
+            <div class="phone-shell" id="captureBox">
+                <div class="status-bar" id="statusBar">
+                    <span id="barTime">12:30</span>
+                    <span id="barNet">中国移动</span>
+                    <span>📶🔋</span>
+                </div>
+                <div class="chat-top-bar" id="chatTitle">好友</div>
+                <div class="chat-container" id="chatBox"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// 全局头像缓存
+let avatarSelfSrc = '';
+let avatarOtherSrc = '';
+
+// DOM节点
+const captureBox = document.getElementById('captureBox');
+const chatBox = document.getElementById('chatBox');
+const chatTitle = document.getElementById('chatTitle');
+
+const statusTime = document.getElementById('statusTime');
+const statusNet = document.getElementById('statusNet');
+const barTime = document.getElementById('barTime');
+const barNet = document.getElementById('barNet');
+
+const nameSelf = document.getElementById('nameSelf');
+const nameOther = document.getElementById('nameOther');
+const sender = document.getElementById('sender');
+const msgType = document.getElementById('msgType');
+const msgText = document.getElementById('msgText');
+const voiceLen = document.getElementById('voiceLen');
+const imgUpload = document.getElementById('imgUpload');
+const msgTime = document.getElementById('msgTime');
+
+const avatarSelf = document.getElementById('avatarSelf');
+const avatarOther = document.getElementById('avatarOther');
+
+const addMsgBtn = document.getElementById('addMsg');
+const clearListBtn = document.getElementById('clearList');
+const resetAllBtn = document.getElementById('resetAll');
+const exportImgBtn = document.getElementById('exportImg');
+const importBatchBtn = document.getElementById('importBatch');
+const batchText = document.getElementById('batchText');
+
+// 顶部状态栏实时同步
+statusTime.addEventListener('input', () => barTime.innerText = statusTime.value);
+statusNet.addEventListener('input', () => barNet.innerText = statusNet.value);
+
+// 聊天头部昵称更新
+function updateChatTitle(){
+    chatTitle.innerText = nameOther.value.trim() || '好友';
+}
+nameOther.addEventListener('input', updateChatTitle);
+updateChatTitle();
+
+// 读取上传头像文件
+avatarSelf.addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = res => avatarSelfSrc = res.target.result;
+    reader.readAsDataURL(file);
+})
+avatarOther.addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = res => avatarOtherSrc = res.target.result;
+    reader.readAsDataURL(file);
+})
+
+// 构建单条消息DOM
+function createMessageElement(){
+    const who = sender.value;
+    const type = msgType.value;
+    const content = msgText.value.trim();
+    const timeStr = msgTime.value.trim();
+    const userName = who === 'self' ? nameSelf.value : nameOther.value;
+    const userAvatar = who === 'self' ? avatarSelfSrc : avatarOtherSrc;
+
+    // 头像HTML
+    let avatarHtml = '';
+    if(userAvatar){
+        avatarHtml = `<img class="avatar" src="${userAvatar}" alt="avatar">`;
+    }else{
+        avatarHtml = `<div class="avatar">${userName.charAt(0)}</div>`;
+    }
+
+    // 不同类型气泡渲染
+    let bubbleHtml = '';
+    switch(type){
+        case 'redpack':
+            bubbleHtml = `<div class="bubble-redpack">🧧 微信红包<br><small>${content || '恭喜发财，大吉大利'}</small></div>`;
+            break;
+        case 'transfer':
+            bubbleHtml = `<div class="bubble-transfer">💴 转账<br><small>${content || '¥0.00'}</small></div>`;
+            break;
+        case 'voice':
+            const sec = voiceLen.value || 1;
+            bubbleHtml = `<div class="bubble-voice ${who==='self'?'msg-self':'msg-other'}">🎤 ${sec}''</div>`;
+            break;
+        case 'image':
+            if(!imgUpload.files[0]){
+                alert('请先选择一张图片文件');
+                return null;
+            }
+            const fileReader = new FileReader();
+            fileReader.onload = function(e){
+                const imgWrap = document.createElement('img');
+                imgWrap.className = 'bubble-img';
+                imgWrap.src = e.target.result;
+                const tempDom = document.querySelector('.temp-image-box');
+                tempDom.innerHTML = '';
+                tempDom.appendChild(imgWrap);
+            }
+            fileReader.readAsDataURL(imgUpload.files[0]);
+            bubbleHtml = `<div class="temp-image-box"></div>`;
+            break;
+        default:
+            bubbleHtml = `<div class="bubble-normal ${who==='self'?'msg-self':'msg-other'}">${content}</div>`;
+    }
+
+    // 整体消息结构
+    const wrapDiv = document.createElement('div');
+    wrapDiv.className = `msg-item ${who === 'self' ? 'msg-self' : 'msg-other'}`;
+    wrapDiv.innerHTML = `
+        ${avatarHtml}
+        <div class="msg-content-wrap">
+            ${timeStr ? `<div class="msg-time-text">${timeStr}</div>` : ''}
+            ${bubbleHtml}
+        </div>
+    `;
+    return wrapDiv;
+}
+
+// 添加单条消息
+addMsgBtn.addEventListener('click', function(){
+    const msgDom = createMessageElement();
+    if(!msgDom) return;
+    chatBox.appendChild(msgDom);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    // 清空输入项
+    msgText.value = '';
+    msgTime.value = '';
+    voiceLen.value = '';
+    imgUpload.value = '';
+})
+
+// 批量导入解析
+importBatchBtn.addEventListener('click', function(){
+    const text = batchText.value.trim();
+    if(!text){
+        alert('请粘贴导入内容');
+        return;
+    }
+    const lines = text.split('\n');
+    lines.forEach(line => {
+        const arr = line.split('|');
+        if(arr.length <3) return;
+        sender.value = arr[0];
+        msgTime.value = arr[1];
+        msgText.value = arr.slice(2).join('|');
+        msgType.value = 'text';
+        const dom = createMessageElement();
+        if(dom) chatBox.appendChild(dom);
+    })
+    chatBox.scrollTop = chatBox.scrollHeight;
+})
+
+// 清空聊天记录
+clearListBtn.addEventListener('click', ()=> chatBox.innerHTML = '');
+
+// 页面全部重置刷新
+resetAllBtn.addEventListener('click', ()=> location.reload());
+
+// 导出高清截图
+exportImgBtn.addEventListener('click', async function(){
+    this.disabled = true;
+    try{
+        const canvas = await html2canvas(captureBox, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#000000'
+        });
+        const aTag = document.createElement('a');
+        aTag.download = `微信聊天记录_${Date.now()}.png`;
+        aTag.href = canvas.toDataURL('image/png');
+        aTag.click();
+    }catch(err){
+        alert('导出失败！跨域图片问题，请在当前页面重新上传头像后重试');
+        console.error(err);
+    }
+    this.disabled = false;
+})
+</script>
+</body>
+</html>

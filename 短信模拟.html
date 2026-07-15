@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>短信模拟器_空铭工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",Helvetica,"Microsoft YaHei",sans-serif;}
+html,body{background:#f5f5f7;height:100vh;display:flex;flex-direction:column;color:#333;}
+.container{max-width:420px;width:100%;margin:0 auto;background:#fff;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* 顶部状态栏 */
+.msg-header{
+    padding:14px 16px;
+    background:#2d80eb;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.phone-input{
+    flex:1;
+    background:rgba(255,255,255,0.2);
+    border:none;
+    outline:none;
+    color:#fff;
+    padding:6px 10px;
+    border-radius:6px;
+}
+.phone-input::placeholder{color:rgba(255,255,255,0.7);}
+
+/* 消息聊天区域 */
+.msg-box{
+    flex:1;
+    padding:16px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.time-tip{
+    text-align:center;
+    font-size:12px;
+    color:#999;
+    margin:6px 0;
+}
+/* 对方收到的短信 */
+.receive{
+    max-width:75%;
+    align-self:flex-start;
+}
+.receive .text{
+    background:#e9e9eb;
+    padding:10px 14px;
+    border-radius:0 12px 12px 12px;
+    line-height:1.6;
+    font-size:14px;
+}
+/* 自己发送的短信 */
+.send{
+    max-width:75%;
+    align-self:flex-end;
+}
+.send .text{
+    background:#2d80eb;
+    color:#fff;
+    padding:10px 14px;
+    border-radius:12px 0 12px 12px;
+    line-height:1.6;
+    font-size:14px;
+}
+.msg-time{
+    font-size:11px;
+    color:#aaa;
+    margin-top:4px;
+    padding:0 6px;
+}
+
+/* 底部输入栏 */
+.send-bar{
+    display:flex;
+    gap:8px;
+    padding:12px;
+    border-top:1px solid #eee;
+}
+#msgInput{
+    flex:1;
+    border:1px solid #ddd;
+    border-radius:20px;
+    padding:10px 16px;
+    outline:none;
+    font-size:14px;
+}
+button{
+    padding:0 18px;
+    border:none;
+    border-radius:20px;
+    background:#2d80eb;
+    color:#fff;
+    cursor:pointer;
+    transition:0.15s;
+}
+button:active{transform:scale(0.95);}
+.btn-group{
+    display:flex;
+    gap:8px;
+    padding:8px 12px;
+    background:#f8f8f8;
+}
+.btn-group button.gray{
+    background:#ddd;
+    color:#333;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="msg-header">
+        <input class="phone-input" id="phoneNum" placeholder="输入对方手机号" value="13800000000">
+        <button onclick="clearAll()">清空记录</button>
+    </div>
+
+    <div class="msg-box" id="msgWrap">
+        <div class="time-tip" id="nowDate"></div>
+    </div>
+
+    <div class="btn-group">
+        <button onclick="addReceive()">模拟接收短信</button>
+        <button class="gray" onclick="exportLog()">导出记录</button>
+    </div>
+
+    <div class="send-bar">
+        <input type="text" id="msgInput" placeholder="输入要发送的内容，回车发送">
+        <button onclick="sendMsg()">发送</button>
+    </div>
+</div>
+
+<script>
+const msgWrap = document.getElementById('msgWrap');
+const msgInput = document.getElementById('msgInput');
+const phoneNum = document.getElementById('phoneNum');
+const nowDate = document.getElementById('nowDate');
+updateDate();
+function updateDate(){
+    const date = new Date();
+    nowDate.innerText = `${date.getMonth()+1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+function getTime(){
+    const d = new Date();
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function sendMsg(){
+    const text = msgInput.value.trim();
+    if(!text) return;
+    const html = `
+        <div class="send">
+            <div class="text">${escapeHtml(text)}</div>
+            <div class="msg-time">${getTime()}</div>
+        </div>
+    `;
+    msgWrap.insertAdjacentHTML('beforeend',html);
+    msgInput.value = '';
+    scrollBottom();
+    saveLocal();
+}
+function addReceive(){
+    const text = msgInput.value.trim();
+    if(!text) return;
+    const html = `
+        <div class="receive">
+            <div class="text">${escapeHtml(text)}</div>
+            <div class="msg-time">${getTime()}</div>
+        </div>
+    `;
+    msgWrap.insertAdjacentHTML('beforeend',html);
+    msgInput.value = '';
+    scrollBottom();
+    saveLocal();
+}
+function scrollBottom(){
+    msgWrap.scrollTop = msgWrap.scrollHeight;
+}
+
+function escapeHtml(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function saveLocal(){
+    localStorage.setItem('sms_log',msgWrap.innerHTML);
+    localStorage.setItem('sms_phone',phoneNum.value);
+}
+window.onload = ()=>{
+    const log = localStorage.getItem('sms_log');
+    const phone = localStorage.getItem('sms_phone');
+    if(log) msgWrap.innerHTML = log;
+    if(phone) phoneNum.value = phone;
+    scrollBottom();
+}
+function clearAll(){
+    if(confirm('确定清空所有短信记录？')){
+        msgWrap.innerHTML = `<div class="time-tip" id="nowDate"></div>`;
+        updateDate();
+        localStorage.removeItem('sms_log');
+    }
+}
+ function exportLog(){
+    const content = document.getElementById('msgWrap').innerText;
+    const blob = new Blob([content],{type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `短信记录_${phoneNum.value}.txt`;
+    a.click();
+}
+ msgInput.addEventListener('keydown',e=>{
+    if(e.key === 'Enter') sendMsg();
+})
+</script>
+</body>
+</html>

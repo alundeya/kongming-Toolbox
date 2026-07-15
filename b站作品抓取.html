@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>B站UP作品抓取_空铭工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background-color: #fff;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+        .item {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #444;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #fb7299;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 17px;
+            cursor: pointer;
+            margin-top:10px;
+        }
+        button:hover {
+            background-color: #e66287;
+        }
+        #result {
+            margin-top:25px;
+            padding:20px;
+            border-radius:8px;
+            font-size:15px;
+            line-height:1.7;
+            max-height: 600px;
+            overflow-y: auto;
+            border:1px solid #eee;
+        }
+        .video-item {
+            padding:10px 0;
+            border-bottom:1px solid #eee;
+            word-break: break-all;
+        }
+        .tips-text {
+            color:#999;
+            font-size:14px;
+            margin-top:6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>B站UP主作品查询_空铭工具箱</h1>
+
+    <div class="item">
+        <label>粘贴UP主主页链接</label>
+        <input type="text" id="urlInput" placeholder="示例：https://space.bilibili.com/123456">
+        <div class="tips-text">仅支持 space.bilibili.com 格式主页地址</div>
+    </div>
+
+    <button onclick="getUpVideos()">获取全部投稿作品</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+// 提取mid数字（UP主UID）
+function getMidFromUrl(url) {
+    const reg = /space\.bilibili\.com\/(\d+)/;
+    const match = url.match(reg);
+    return match ? match[1] : null;
+}
+
+async function getUpVideos() {
+    const resultBox = document.getElementById('result');
+    const url = document.getElementById('urlInput').value.trim();
+    const mid = getMidFromUrl(url);
+
+    if (!mid) {
+        resultBox.innerHTML = `<span style="color:red;">链接格式错误，请输入正确的B站个人主页地址</span>`;
+        return;
+    }
+
+    resultBox.innerHTML = '正在请求数据，请稍候...';
+
+    try {
+        // 公共跨域代理 + B站官方接口
+        const apiUrl = `https://api.bilibili.com/x/space/arc/search?mid=${mid}&ps=30&pn=1`;
+        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+
+        const res = await fetch(proxy);
+        const json = await res.json();
+        const data = JSON.parse(json.contents);
+
+        if (data.code !== 0) {
+            resultBox.innerHTML = `<span style="color:red;">查询失败：${data.message}</span>`;
+            return;
+        }
+
+        const list = data.data.list.vlist;
+        if (list.length === 0) {
+            resultBox.innerHTML = '该UP主暂无公开投稿视频';
+            return;
+        }
+
+        let html = `<strong>共查询到 ${list.length} 条投稿作品：</strong><br><br>`;
+        list.forEach((item, index) => {
+            html += `
+            <div class="video-item">
+                <b>${index+1}. ${item.title}</b><br>
+                播放：${item.play} | 发布时间：${new Date(item.created*1000).toLocaleString()}<br>
+                链接：<a href="https://www.bilibili.com/video/${item.bvid}" target="_blank">https://www.bilibili.com/video/${item.bvid}</a>
+            </div>
+            `;
+        });
+
+        resultBox.innerHTML = html;
+
+    } catch (err) {
+        resultBox.innerHTML = `<span style="color:red;">网络请求失败，代理接口暂时不可用，请稍后重试</span>`;
+        console.error(err);
+    }
+}
+</script>
+</body>
+</html>

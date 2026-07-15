@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>公众号生成_空铭工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",Helvetica,"Microsoft YaHei",sans-serif;}
+html,body{background:#ffffff;color:#333;font-size:15px;}
+.container{max-width:750px;margin:0 auto;padding:12px;background:#fff;}
+.control-box{background:#ffffff;padding:16px;margin-bottom:16px;}
+.control-box input, .control-box textarea{
+    width:100%;
+    padding:12px;border:1px solid #e5e5e5;border-radius:6px;margin-bottom:12px;outline:none;font-size:15px;
+}
+.control-box textarea{min-height:120px;resize:vertical;}
+button{width:100%;padding:12px;border:none;border-radius:5px;background:#07c160;color:#fff;font-size:15px;cursor:pointer;}
+.article-card{background:#ffffff;overflow:hidden;display:none;}
+.article-body{padding:24px 20px 35px;}
+.article-title{font-size:24px;line-height:1.4;font-weight:600;margin-bottom:14px;color:#111;}
+.article-meta{font-size:13px;color:#888;margin-bottom:20px;display:flex;gap:12px;}
+.article-content{font-size:17px;line-height:1.8;color:#333;word-break:break-all;}
+.article-content p{margin-bottom:16px;}
+.wx-copyright{margin-top:30px;padding-top:15px;border-top:1px solid #eee;font-size:12px;color:#aaa;text-align:center;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="control-box" id="editPanel">
+        <input id="officalName" placeholder="公众号名称" value="">
+        <input id="articleTitle" placeholder="文章标题" value="">
+        <textarea id="articleText" placeholder="粘贴正文内容，换行自动分段"></textarea>
+        <button onclick="submitJump()">生成预览</button>
+    </div>
+    <div class="article-card" id="articleWrap">
+        <div class="article-body">
+            <h1 class="article-title" id="showTitle"></h1>
+            <div class="article-meta">
+                <span id="showOffical"></span>
+                <span id="showTime"></span>
+                <span>原创</span>
+            </div>
+            <div class="article-content" id="showContent"></div>
+            <div class="wx-copyright">
+                空铭工具箱 · 原创工具
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const urlParams = new URLSearchParams(location.search);
+const artId = urlParams.get('id');
+function getArticleList(){
+    return JSON.parse(localStorage.getItem('wxArticleList')) || [];
+}
+function saveArticleList(list){
+    localStorage.setItem('wxArticleList', JSON.stringify(list));
+}
+function getNowDate(){
+    const d = new Date();
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+}
+function submitJump(){
+    const name = document.getElementById('officalName').value.trim();
+    const title = document.getElementById('articleTitle').value.trim();
+    const content = document.getElementById('articleText').value.trim();
+    if(!name || !title || !content){
+        alert('请完善全部内容');
+        return;
+    }
+
+    const id = Date.now().toString();
+    const articleData = {
+        id,
+        name,
+        title,
+        content,
+        time: getNowDate()
+    };
+
+    const list = getArticleList();
+    list.push(articleData);
+    saveArticleList(list);
+    location.href = `?id=${id}`;
+}
+if(artId){
+    document.getElementById('editPanel').style.display = 'none';
+    document.getElementById('articleWrap').style.display = 'block';
+
+    const list = getArticleList();
+    const target = list.find(item => item.id === artId);
+    if(!target){
+        alert('文章不存在，返回编辑页');
+        location.href = location.pathname;
+    }else{
+        document.getElementById('showOffical').innerText = target.name;
+        document.getElementById('showTitle').innerText = target.title;
+        document.getElementById('showTime').innerText = target.time;
+        const html = target.content.split('\n').filter(str=>str.trim()).map(p=>`<p>${p}</p>`).join('');
+        document.getElementById('showContent').innerHTML = html;
+    }
+}
+</script>
+</body>
+</html>

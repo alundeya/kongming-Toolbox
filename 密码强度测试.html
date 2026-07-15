@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>密码强度检测_空铭工具箱</title>
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",PingFang SC,Microsoft YaHei,sans-serif;
+}
+body{
+  background:#f5f5f5;
+  padding:24px 16px;
+}
+.wrapper{
+  max-width:600px;
+  margin:0 auto;
+}
+.title{
+  font-size:18px;
+  color:#333;
+  text-align:center;
+  margin-bottom:20px;
+  font-weight:500;
+}
+.card{
+  background:#fff;
+  border-radius:5px;
+  padding:20px;
+ }
+.input-item{
+  border-bottom:1px solid #eee;
+  padding-bottom:16px;
+  margin-bottom:16px;
+}
+.input-item input{
+  width:100%;
+  border:none;
+  outline:none;
+  font-size:16px;
+  padding:8px 0;
+  color:#333;
+  background:transparent;
+}
+.input-item input::placeholder{
+  color:#c8c9cc;
+}
+/* 进度条 微信简约样式 */
+.progress-wrap{
+  height:4px;
+  background:#eee;
+  border-radius:2px;
+  overflow:hidden;
+  margin-bottom:20px;
+}
+.progress-bar{
+  height:100%;
+  width:0%;
+  transition:width 0.24s ease;
+}
+.result-area{
+  padding-top:8px;
+}
+.level-text{
+  font-size:16px;
+  margin-bottom:10px;
+  font-weight:500;
+}
+.crack-text{
+  font-size:15px;
+  color:#666;
+  line-height:1.6;
+  word-break:break-all;
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="title">密码强度检测</div>
+  <div class="card">
+    <div class="input-item">
+      <input type="text" id="pwdInput" placeholder="请输入需要检测的内容">
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="result-area" id="resultBox">
+      <div class="level-text" style="color:#999;">等待输入...</div>
+      <div class="crack-text"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const pwdInput = document.getElementById('pwdInput');
+const progressBar = document.getElementById('progressBar');
+const resultBox = document.getElementById('resultBox');
+
+// 暴力破解算力：每秒1亿次尝试
+const CRACK_PER_SECOND = 100000000;
+const CHAR_SETS = { lower:26, upper:26, number:10, symbol:32 };
+
+// 时间换算，一直换算到年份，不截断
+function formatTime(seconds){
+  if(seconds < 1) return '小于1秒';
+  if(seconds < 60) return `${Math.round(seconds)} 秒`;
+  const mins = seconds / 60;
+  if(mins < 60) return `${Math.round(mins)} 分钟`;
+  const hours = mins / 60;
+  if(hours < 24) return `${Math.round(hours)} 小时`;
+  const days = hours / 24;
+  if(days < 30) return `${Math.round(days)} 天`;
+  const months = days / 30;
+  if(months < 12) return `${Math.round(months)} 个月`;
+  const years = months / 12;
+  return `${years.toFixed(4)} 年`;
+}
+
+function checkPassword(password){
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasNum = /[0-9]/.test(password);
+  const hasSym = /[^a-zA-Z0-9]/.test(password);
+
+  let totalChars = 0;
+  if(hasLower) totalChars += CHAR_SETS.lower;
+  if(hasUpper) totalChars += CHAR_SETS.upper;
+  if(hasNum) totalChars += CHAR_SETS.number;
+  if(hasSym) totalChars += CHAR_SETS.symbol;
+
+  const len = password.length;
+  const total = totalChars ** len;
+  const needSec = total / CRACK_PER_SECOND;
+
+  // 打分逻辑
+  let score = 0;
+  if(len >= 8) score +=25;
+  if(len >=12) score +=15;
+  if(hasLower) score +=15;
+  if(hasUpper) score +=15;
+  if(hasNum) score +=15;
+  if(hasSym) score +=15;
+
+  let level, color;
+  if(score < 30){
+    level = '弱密码';
+    color = '#fa5151';
+  }else if(score <60){
+    level = '中等密码';
+    color = '#ff9500';
+  }else if(score <85){
+    level = '强密码';
+    color = '#07c160';
+  }else{
+    level = '极高安全密码';
+    color = '#007aff';
+  }
+
+  progressBar.style.width = score + '%';
+  progressBar.style.background = color;
+
+  const timeStr = formatTime(needSec);
+  resultBox.innerHTML = `
+    <div class="level-text" style="color:${color}">${level}</div>
+    <div class="crack-text">黑客暴力破解预计耗时：${timeStr}</div>
+  `;
+}
+
+pwdInput.addEventListener('input',e=>{
+  checkPassword(e.target.value);
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>视频潜力_空铭工具箱</title>
+<style>
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Microsoft Yahei", system-ui, sans-serif;
+}
+body{
+  background-color: #fff;
+  padding:20px 14px;
+}
+.container{
+  max-width:600px;
+  margin:0 auto;
+  background:#ffffff;
+  padding:28px;
+ }
+h1{
+  text-align:center;
+  color:#1a1a1a;
+  font-size:22px;
+  margin-bottom:8px;
+}
+.desc{
+  font-size:13px;
+  color:#777;
+  text-align:center;
+  margin-bottom:30px;
+}
+.form-item{
+  margin-bottom:20px;
+}
+label{
+  display:block;
+  font-size:15px;
+  color:#222;
+  margin-bottom:7px;
+  font-weight:500;
+}
+input{
+  width:100%;
+  padding:12px 14px;
+  border:1px solid #dde1eb;
+  border-radius:8px;
+  font-size:14px;
+  transition:0.2s;
+}
+input:focus{
+  outline:none;
+  border-color:#07c160;
+  box-shadow:0 0 0 3px rgba(59,130,246,0.15);
+}
+.row-group{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+}
+#checkBtn{
+  width:100%;
+  padding:14px;
+  background:#07c160;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  font-weight:500;
+  cursor:pointer;
+  margin-top:10px;
+}
+#checkBtn:hover{
+  background:#07c160;
+}
+.result-box{
+  margin-top:26px;
+  padding:22px;
+  border-radius:10px;
+  display:none;
+  white-space:pre-line;
+}
+.S{background:#ecfccb;border:1px solid #84cc16;}
+.A{background:#dbeafe;border:1px solid #3b82f6;}
+.B{background:#fff7ed;border:1px solid #f97316;}
+.C{background:#fee2e2;border:1px solid #ef4444;}
+.res-title{
+  font-size:19px;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+.res-content{
+  line-height:1.8;
+  font-size:14px;
+  color:#333;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>视频爆款潜力预测检测</h1>
+  <p class="desc">基于短视频平台推荐算法测算，输入发布1天后数据，自动判定能否持续爆火</p>
+
+  <!-- 1.视频标题 -->
+  <div class="form-item">
+    <label>1. 视频完整标题</label>
+    <input type="text" id="title" placeholder="输入视频标题">
+  </div>
+
+  <!-- 2.完播率 -->
+  <div class="form-item">
+    <label>2. 发布1天后整体完播率（%）</label>
+    <input type="number" id="playRate" placeholder="例：35" min="0" max="100">
+  </div>
+
+  <!-- 3.总播放量 -->
+  <div class="form-item">
+    <label>3. 发布1天后总播放量</label>
+    <input type="number" id="views" placeholder="例：12600" min="0">
+  </div>
+
+  <!-- 4.点赞、收藏、分享 -->
+  <div class="form-item">
+    <label>4. 发布1天后互动数据</label>
+    <div class="row-group">
+      <input type="number" id="like" placeholder="点赞数" min="0">
+      <input type="number" id="collect" placeholder="收藏数" min="0">
+      <input type="number" id="share" placeholder="分享数" min="0">
+    </div>
+  </div>
+
+  <!-- 5.账号注册天数 -->
+  <div class="form-item">
+    <label>5. 账号注册总天数</label>
+    <input type="number" id="registerDay" placeholder="例：280" min="1">
+  </div>
+
+  <button id="checkBtn">一键测算爆款概率</button>
+
+  <div id="resultBox" class="result-box"></div>
+</div>
+
+<script>
+const btn = document.getElementById('checkBtn');
+const resultBox = document.getElementById('resultBox');
+
+//爆款关键词库，用于标题打分
+const hotWords = ['千万不要','忠告','揭秘','内幕','后悔','千万别','一定要','干货','教程','技巧','实测','对比','真相','隐藏','普通人','低成本','暴富','避雷','踩坑','紧急','注意','限时','独家'];
+
+btn.onclick = function(){
+  //获取全部输入值
+  const title = document.getElementById('title').value.trim();
+  const playRate = Number(document.getElementById('playRate').value);
+  const views = Number(document.getElementById('views').value);
+  const like = Number(document.getElementById('like').value);
+  const collect = Number(document.getElementById('collect').value);
+  const share = Number(document.getElementById('share').value);
+  const regDay = Number(document.getElementById('registerDay').value);
+
+  //空值校验
+  if(!title || isNaN(playRate) || isNaN(views) || isNaN(like) || isNaN(collect) || isNaN(share) || isNaN(regDay)){
+    alert('请把所有信息完整填写，数字不能为空');
+    return;
+  }
+  if(playRate<0 || playRate>100){
+    alert('完播率需要在0~100之间');
+    return;
+  }
+
+  //1.标题得分（满分20）
+  let titleScore = 0;
+  hotWords.forEach(word=>{
+    if(title.includes(word)) titleScore +=4;
+  })
+  titleScore = Math.min(titleScore,20);
+
+  //2.核心互动率计算（平台核心权重）
+  const likeRate = like / views;    //点赞率
+  const collectRate = collect / views;//收藏率（权重最高）
+  const shareRate = share / views;  //转发率
+
+  //加权互动得分（满分50）收藏40%、转发35%、点赞25%
+  let interactScore = (collectRate*100*0.4 + shareRate*100*0.35 + likeRate*100*0.25) * 5;
+  interactScore = Math.min(interactScore,50);
+
+  //3.完播率得分（满分20，冷启动门槛）
+  let playScore = playRate * 0.4;
+  playScore = Math.min(playScore,20);
+
+  //4.账号注册时长加成（满分10）
+  //0~90天新号新手期扣分，90天以上稳步加分，3年封顶
+  let accountScore = 0;
+  if(regDay <=90){
+    accountScore = regDay /90 *4;
+  }else if(regDay <=1095){
+    accountScore =4 + ((regDay-90)/1005)*6;
+  }else{
+    accountScore =10;
+  }
+
+  //总分汇总 满分100
+  const total = Math.round(titleScore + interactScore + playScore + accountScore);
+
+  //判定等级与文案
+  let levelClass,levelName,tips;
+  if(total >=85){
+    levelClass = 'S';
+    levelName = 'S级超级爆款（必上热门）';
+    tips = `综合评分：${total}/100
+评级：S级超级爆款
+✅优势解析：
+1.标题带有高流量钩子词，平台抓取推荐优先级极高
+2.收藏&转发数据远超行业均值，会触发7天长尾持续推流
+3.账号运营时间久，账号权重充足，无限流风险
+
+💡运营建议：尽快发布同赛道续集视频，承接流量涨粉。`
+  }else if(total >=70){
+    levelClass = 'A';
+    levelName = 'A级潜力爆款（大概率出圈）';
+    tips = `综合评分：${total}/100
+评级：A级潜力爆款
+✅优势解析：
+基础数据达标，已经突破初始流量池，后续播放会稳步上涨。
+收藏数据不错，内容具备实用价值，适合二次传播。
+
+💡优化建议：在评论区置顶互动提问，拉升评论数据冲击更大流量池。`
+  }else if(total >=50){
+    levelClass = 'B';
+    levelName = 'B级普通流量（平稳播放，很难爆火）';
+    tips = `综合评分：${total}/100
+评级：B级普通流量
+⚠️现状：仅达到平台基础播放标准，互动数据偏弱，无法进入更大推荐池。
+短板：完播率偏低 / 收藏太少 / 新账号权重不足
+
+💡优化建议：优化视频前3秒开头钩子，增加价值点引导用户收藏。`
+  }else{
+    levelClass = 'C';
+    levelName = 'C级低质流量（建议重拍重发）';
+    tips = `综合评分：${total}/100
+评级：C级低质流量
+❌预警：各项核心数据都未达标，平台已经判定为低质量内容，后续不会追加推荐。
+
+核心问题排查：
+1.标题无引流关键词，系统无法精准匹配受众
+2.完播率过低，用户划走严重
+3.几乎没有收藏、转发，内容没有留存价值
+
+💡建议：修改标题+精简视频时长，重新发布测试。`
+  }
+
+  resultBox.className = `result-box ${levelClass}`;
+  resultBox.style.display = 'block';
+  resultBox.innerHTML = `
+<div class="res-title">${levelName}</div>
+<div class="res-content">${tips}</div>
+`;
+}
+</script>
+</body>
+</html>

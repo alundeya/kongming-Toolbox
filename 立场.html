@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测测你的政治立场_空铭工具箱</title>
+<style>
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Microsoft Yahei", system-ui, sans-serif;
+}
+body{
+  background-color: #f5f7fa;
+  padding:20px 15px;
+}
+.wrap{
+  max-width:620px;
+  margin:0 auto;
+  background:#fff;
+  border-radius:14px;
+  padding:26px;
+  box-shadow:0 2px 15px rgba(0,0,0,0.06);
+}
+h1{
+  text-align:center;
+  color:#222;
+  font-size:22px;
+  margin-bottom:10px;
+}
+.desc{
+  font-size:13px;
+  color:#666;
+  text-align:center;
+  margin-bottom:25px;
+  line-height:1.6;
+}
+.question{
+  margin-bottom:22px;
+  padding-bottom:18px;
+  border-bottom:1px solid #eee;
+}
+.q-title{
+  font-size:15px;
+  color:#333;
+  margin-bottom:12px;
+  font-weight:500;
+}
+.opt{
+  display:block;
+  padding:9px 12px;
+  margin:6px 0;
+  border:1px solid #ddd;
+  border-radius:6px;
+  cursor:pointer;
+  transition:0.2s;
+}
+.opt:hover{
+  background:#f0f7ff;
+  border-color:#84bfff;
+}
+.opt input{
+  margin-right:8px;
+}
+#submitBtn{
+  width:100%;
+  padding:14px;
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+  margin-top:10px;
+}
+#submitBtn:hover{
+  background:#1d4ed8;
+}
+.result-box{
+  margin-top:24px;
+  padding:20px;
+  border-radius:10px;
+  display:none;
+  white-space: pre-line;
+}
+.left{
+  background:#e8f0fe;
+  border:1px solid #94b8e8;
+}
+.right{
+  background:#fef2f2;
+  border:1px solid #f8b4b4;
+}
+.mid{
+  background:#f0fdf4;
+  border:1px solid #86efac;
+}
+.res-title{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+.res-text{
+  line-height:1.7;
+  font-size:14px;
+  color:#333;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>完整政治立场光谱测试（20题）</h1>
+  <p class="desc">
+参考国际标准政治学划分：激进左翼→硬左翼→中间偏左→中立→中间偏右→硬右翼→激进右翼
+同时匹配二维政治罗盘四象限定位。本测试仅为观念参考，我国主流意识形态不属于西式左右对立框架。
+可以的话记得帮忙推荐一下喵~
+  </p>
+
+<!-- 第1题 -->
+<div class="question">
+<div class="q-title">1. 对于贫富差距，你更认同？</div>
+<label class="opt"><input type="radio" name="q1" value="-3"> 必须彻底抹平贫富差距，废除私有财富积累模式</label>
+<label class="opt"><input type="radio" name="q1" value="-2"> 国家应当高额累进征税富人，打造全民普惠高福利体系</label>
+<label class="opt"><input type="radio" name="q1" value="-1"> 通过合理税收调节差距，保障底层人群基础生存保障</label>
+<label class="opt"><input type="radio" name="q1" value="0"> 贫富差距是正常现象，适度平衡即可，不用刻意倾斜</label>
+<label class="opt"><input type="radio" name="q1" value="1"> 贫富差距来自个人努力区别，不需要政策强行抹平</label>
+<label class="opt"><input type="radio" name="q1" value="2"> 自由竞争优胜劣汰，强者理应占有更多社会资源</label>
+<label class="opt"><input type="radio" name="q1" value="3"> 弱肉强食是社会进化法则，弱者淘汰属于必然结果</label>
+</div>
+
+<!-- 第2题 -->
+<div class="question">
+<div class="q-title">2. 面对资本巨头垄断扩张，你的态度是？</div>
+<label class="opt"><input type="radio" name="q2" value="-3"> 取缔所有大型私有资本，全盘公有化统筹</label>
+<label class="opt"><input type="radio" name="q2" value="-2"> 严格限制资本规模，严防资本渗透各行各业</label>
+<label class="opt"><input type="radio" name="q2" value="-1"> 依法监管反垄断，划定资本经营红线</label>
+<label class="opt"><input type="radio" name="q2" value="0"> 监管和市场自由发展维持平衡</label>
+<label class="opt"><input type="radio" name="q2" value="1"> 放宽管制，给资本更多自由发展空间</label>
+<label class="opt"><input type="radio" name="q2" value="2"> 完全放开自由竞争，政府不要干预资本博弈</label>
+<label class="opt"><input type="radio" name="q2" value="3"> 由资本强者掌控社会运转，效率才会最大化</label>
+</div>
+
+<!-- 第3题 -->
+<div class="question">
+<div class="q-title">3. 社会福利制度，你支持哪一种？</div>
+<label class="opt"><input type="radio" name="q3" value="-3"> 全民物资平均分配，彻底消除收入差别</label>
+<label class="opt"><input type="radio" name="q3" value="-2"> 优先高福利兜底，哪怕牺牲经济发展效率</label>
+<label class="opt"><input type="radio" name="q3" value="-1"> 基础福利全覆盖，坚持多劳多得兼顾公平</label>
+<label class="opt"><input type="radio" name="q3" value="0"> 福利够用就好，避免过度福利催生躺平人群</label>
+<label class="opt"><input type="radio" name="q3" value="1"> 缩减普惠福利，鼓励所有人自力更生</label>
+<label class="opt"><input type="radio" name="q3" value="2"> 福利只会养懒人，应当大幅度削减社会救济</label>
+<label class="opt"><input type="radio" name="q3" value="3"> 没有对等付出的帮扶，完全没有存在意义</label>
+</div>
+
+<!-- 第4题 -->
+<div class="question">
+<div class="q-title">4. 对于多元小众文化、不同价值观群体，你会？</div>
+<label class="opt"><input type="radio" name="q4" value="-3"> 统一集体思想，约束一切异类观念</label>
+<label class="opt"><input type="radio" name="q4" value="-2"> 集体共识优先，小众文化需要主动收敛</label>
+<label class="opt"><input type="radio" name="q4" value="-1"> 包容多元选择，但不能侵害公共集体利益</label>
+<label class="opt"><input type="radio" name="q4" value="0"> 互相尊重不同选择，互不干涉私生活</label>
+<label class="opt"><input type="radio" name="q4" value="1"> 个人自由优先，只要不触犯法律就应当被允许</label>
+<label class="opt"><input type="radio" name="q4" value="2"> 排斥违背传统奋斗价值观的小众群体</label>
+<label class="opt"><input type="radio" name="q4" value="3"> 排斥异己人群，非同类群体无需包容善待</label>
+</div>
+
+<!-- 第5题 -->
+<div class="question">
+<div class="q-title">5. 国家经济运行模式，你更倾向？</div>
+<label class="opt"><input type="radio" name="q5" value="-3"> 完全计划经济统筹，取消市场经济</label>
+<label class="opt"><input type="radio" name="q5" value="-2"> 计划经济为主，市场仅作为极小补充</label>
+<label class="opt"><input type="radio" name="q5" value="-1"> 宏观调控+市场经济有机结合</label>
+<label class="opt"><input type="radio" name="q5" value="0"> 计划与市场均衡搭配使用</label>
+<label class="opt"><input type="radio" name="q5" value="1"> 市场经济为主，仅保留少量宏观调控</label>
+<label class="opt"><input type="radio" name="q5" value="2"> 完全自由市场经济，最大限度减少行政管控</label>
+<label class="opt"><input type="radio" name="q5" value="3"> 无约束自由市场，依靠自然竞争完成社会筛选</label>
+</div>
+
+<!-- 第6题 -->
+<div class="question">
+<div class="q-title">6. 关于私有财产，你的看法是？</div>
+<label class="opt"><input type="radio" name="q6" value="-3"> 私有财产是社会不公根源，应当逐步取缔</label>
+<label class="opt"><input type="radio" name="q6" value="-2"> 高额征收遗产税、财产税，限制大额私人资产传承</label>
+<label class="opt"><input type="radio" name="q6" value="-1"> 保护合法私有财产，同时用税收调节过度财富累积</label>
+<label class="opt"><input type="radio" name="q6" value="0"> 合法私有财产神圣不可侵犯，小幅调节即可</label>
+<label class="opt"><input type="radio" name="q6" value="1"> 最大限度保护私有财产，减少财产类税收</label>
+<label class="opt"><input type="radio" name="q6" value="2"> 私有财产权是第一人权，政府无权干涉个人资产</label>
+<label class="opt"><input type="radio" name="q6" value="3"> 财富世袭是合理秩序，强者家族理应世代占据优势</label>
+</div>
+
+<!-- 第7题 -->
+<div class="question">
+<div class="q-title">7. 劳动者权益保护，你认为应当？</div>
+<label class="opt"><input type="radio" name="q7" value="-3"> 取消雇佣制度，全部实行集体公有制劳动</label>
+<label class="opt"><input type="radio" name="q7" value="-2"> 严格强制工时、薪资，企业没有自主用工权限</label>
+<label class="opt"><input type="radio" name="q7" value="-1"> 完善劳动法，划定企业用工底线，平衡劳资双方</label>
+<label class="opt"><input type="radio" name="q7" value="0"> 劳资双方协商，法律只做最低限度兜底</label>
+<label class="opt"><input type="radio" name="q7" value="1"> 放宽用工限制，提升企业活力优先</label>
+<label class="opt"><input type="radio" name="q7" value="2"> 市场决定薪资与工时，劳动者自主选择接受与否</label>
+<label class="opt"><input type="radio" name="q7" value="3"> 就业本就是优胜劣汰，无法适应就该被淘汰</label>
+</div>
+
+<!-- 第8题 -->
+<div class="question">
+<div class="q-title">8. 对于环保政策，你的立场？</div>
+<label class="opt"><input type="radio" name="q8" value="-3"> 不惜一切代价关停高耗能产业，优先生态绝对保护</label>
+<label class="opt"><input type="radio" name="q8" value="-2"> 强硬推行环保法案，限制各类工业扩张</label>
+<label class="opt"><input type="radio" name="q8" value="-1"> 环保与产业发展协调推进，循序渐进改造</label>
+<label class="opt"><input type="radio" name="q8" value="0"> 在发展前提下兼顾环保，不搞一刀切</label>
+<label class="opt"><input type="radio" name="q8" value="1"> 经济发展优先，环保标准适度放宽</label>
+<label class="opt"><input type="radio" name="q8" value="2"> 环保限制阻碍经济，应当弱化管控</label>
+<label class="opt"><input type="radio" name="q8" value="3"> 自然资源就该被开发利用，生态让步发展</label>
+</div>
+
+<!-- 第9题 -->
+<div class="question">
+<div class="q-title">9. 移民与外来人口接纳问题，你倾向？</div>
+<label class="opt"><input type="radio" name="q9" value="-3"> 无差别开放接纳，资源全民平均共享</label>
+<label class="opt"><input type="radio" name="q9" value="-2"> 宽松准入，提供同等福利保障外来群体</label>
+<label class="opt"><input type="radio" name="q9" value="-1"> 有限接纳，设置门槛，保障本土居民优先权益</label>
+<label class="opt"><input type="radio" name="q9" value="0"> 理性管控入境人数，平衡包容与本土资源压力</label>
+<label class="opt"><input type="radio" name="q9" value="1"> 收紧移民政策，优先保护本土人口利益</label>
+<label class="opt"><input type="radio" name="q9" value="2"> 严格限制外来人口流入，避免资源被瓜分</label>
+<label class="opt"><input type="radio" name="q9" value="3"> 排斥外来族群，本土血统与文化才该占据主导</label>
+</div>
+
+<!-- 第10题 -->
+<div class="question">
+<div class="q-title">10. 国家权力大小，你更支持？</div>
+<label class="opt"><input type="radio" name="q10" value="-3"> 强集权统筹全部社会生产与生活事务</label>
+<label class="opt"><input type="radio" name="q10" value="-2"> 强化国家管控能力，减少地方与个体自主空间</label>
+<label class="opt"><input type="radio" name="q10" value="-1"> 强国家宏观治理，下放合理地方自治权限</label>
+<label class="opt"><input type="radio" name="q10" value="0"> 中央与地方、公权力与私人空间平衡制衡</label>
+<label class="opt"><input type="radio" name="q10" value="1"> 小政府理念，减少行政对民间事务干预</label>
+<label class="opt"><input type="radio" name="q10" value="2"> 最大限度缩减政府职能，依靠市场自治</label>
+<label class="opt"><input type="radio" name="q10" value="3"> 取消国家管控，完全依靠私人契约维持社会</label>
+</div>
+
+<!-- 第11题 -->
+<div class="question">
+<div class="q-title">11. 教育资源分配，你认为应该？</div>
+<label class="opt"><input type="radio" name="q11" value="-3"> 完全统一公立平均教育，取缔私立院校</label>
+<label class="opt"><input type="radio" name="q11" value="-2"> 严控私立教育，统一教学资源与考核标准</label>
+<label class="opt"><input type="radio" name="q11" value="-1"> 公立普惠为主，规范私立教育有序发展</label>
+<label class="opt"><input type="radio" name="q11" value="0"> 公私教育并行，政府兜底基础义务教育</label>
+<label class="opt"><input type="radio" name="q11" value="1"> 放开民办教育，满足不同阶层差异化需求</label>
+<label class="opt"><input type="radio" name="q11" value="2"> 教育市场化，付费获得更好资源理所应当</label>
+<label class="opt"><input type="radio" name="q11" value="3"> 教育是个人投资，没钱接受优质教育就是能力不足</label>
+</div>
+
+<!-- 第12题 -->
+<div class="question">
+<div class="q-title">12. 传统文化与现代新文化冲突时，你会？</div>
+<label class="opt"><input type="radio" name="q12" value="-3"> 破除所有旧传统，完全重塑统一新式集体文化</label>
+<label class="opt"><input type="radio" name="q12" value="-2"> 选择性改造传统，服务整体集体价值观</label>
+<label class="opt"><input type="radio" name="q12" value="-1"> 传承优良传统，包容合理的现代多元文化</label>
+<label class="opt"><input type="radio" name="q12" value="0"> 传统与现代融合，取其精华去其糟粕</label>
+<label class="opt"><input type="radio" name="q12" value="1"> 优先保留本土传统习俗，谨慎接纳外来新文化</label>
+<label class="opt"><input type="radio" name="q12" value="2"> 坚守本土传统伦理，抵制外来新潮文化入侵</label>
+<label class="opt"><input type="radio" name="q12" value="3"> 传统本位至上，外来文化应当被限制传播</label>
+</div>
+
+<!-- 第13题 -->
+<div class="question">
+<div class="q-title">13. 对外经贸合作，你的态度是？</div>
+<label class="opt"><input type="radio" name="q13" value="-3"> 切断全球化贸易，自给自足封闭发展</label>
+<label class="opt"><input type="radio" name="q13" value="-2"> 有限对外合作，严防外部资本与文化渗透</label>
+<label class="opt"><input type="radio" name="q13" value="-1"> 独立自主对外开放，把控合作主动权</label>
+<label class="opt"><input type="radio" name="q13" value="0"> 自由贸易合作，同时保护本土关键产业</label>
+<label class="opt"><input type="radio" name="q13" value="1"> 全面拥抱全球化，放宽对外投资门槛</label>
+<label class="opt"><input type="radio" name="q13" value="2"> 零壁垒自由贸易，市场自由对接全球</label>
+<label class="opt"><input type="radio" name="q13" value="3"> 完全融入全球资本体系，弱国服从强国市场规则</label>
+</div>
+
+<!-- 第14题 -->
+<div class="question">
+<div class="q-title">14. 社会平权运动（性别、身份平等），你怎么看？</div>
+<label class="opt"><input type="radio" name="q14" value="-3"> 强行抹平一切身份差异，完全同质化社会</label>
+<label class="opt"><input type="radio" name="q14" value="-2"> 大力推进平权立法，强制消除各类群体差异</label>
+<label class="opt"><input type="radio" name="q14" value="-1"> 保障法定平等权利，尊重客观生理现实区别</label>
+<label class="opt"><input type="radio" name="q14" value="0"> 法律面前人人平等，不刻意制造身份对立</label>
+<label class="opt"><input type="radio" name="q14" value="1"> 认可自然身份差异，反对过度平权矫枉过正</label>
+<label class="opt"><input type="radio" name="q14" value="2"> 遵循天然社会分工，拒绝激进平权诉求</label>
+<label class="opt"><input type="radio" name="q14" value="3"> 身份层级天然存在，强行平等只会破坏秩序</label>
+</div>
+
+<!-- 第15题 -->
+<div class="question">
+<div class="q-title">15. 医疗体系建设，你支持？</div>
+<label class="opt"><input type="radio" name="q15" value="-3"> 全盘公立免费医疗，取消私立医疗机构</label>
+<label class="opt"><input type="radio" name="q15" value="-2"> 高福利全民公费医疗，限制市场化医疗</label>
+<label class="opt"><input type="radio" name="q15" value="-1"> 公立兜底医保，私立医疗作为补充选择</label>
+<label class="opt"><input type="radio" name="q15" value="0"> 医保普惠，公私医疗共存互补</label>
+<label class="opt"><input type="radio" name="q15" value="1"> 市场化医疗提升效率，医保仅保障基础大病</label>
+<label class="opt"><input type="radio" name="q15" value="2"> 医疗全面市场化，价格由供需决定</label>
+<label class="opt"><input type="radio" name="q15" value="3"> 医疗是奢侈品，无力承担就只能接受自然筛选</label>
+</div>
+
+<!-- 第16题 -->
+<div class="question">
+<div class="q-title">16. 言论自由边界，你认为？</div>
+<label class="opt"><input type="radio" name="q16" value="-3"> 言论必须完全统一对齐集体主流声音</label>
+<label class="opt"><input type="radio" name="q16" value="-2"> 严格管控舆论，限制批判性观点传播</label>
+<label class="opt"><input type="radio" name="q16" value="-1"> 法律框架内自由发言，禁止造谣分裂言论</label>
+<label class="opt"><input type="radio" name="q16" value="0"> 合法范围内言论自由，兼顾公共秩序</label>
+<label class="opt"><input type="radio" name="q16" value="1"> 放宽言论限制，减少行政舆论管控</label>
+<label class="opt"><input type="radio" name="q16" value="2"> 最大限度放开言论，仅惩罚人身伤害类发言</label>
+<label class="opt"><input type="radio" name="q16" value="3"> 绝对言论自由，不需要任何外界约束</label>
+</div>
+
+<!-- 第17题 -->
+<div class="question">
+<div class="q-title">17. 城市发展与乡村振兴优先级？</div>
+<label class="opt"><input type="radio" name="q17" value="-3"> 城乡完全同质化，统一分配建设资源</label>
+<label class="opt"><input type="radio" name="q17" value="-2"> 倾斜资源全力扶持乡村，限制大城市扩张</label>
+<label class="opt"><input type="radio" name="q17" value="-1"> 城乡统筹均衡发展，缩小地域差距</label>
+<label class="opt"><input type="radio" name="q17" value="0"> 城市带动乡村，梯度协调发展</label>
+<label class="opt"><input type="radio" name="q17" value="1"> 优先发展核心城市，自然辐射带动乡村</label>
+<label class="opt"><input type="radio" name="q17" value="2"> 资源向优势地区集中，效率优先</label>
+<label class="opt"><input type="radio" name="q17" value="3"> 人口自然向发达地区聚集，落后地区优胜劣汰</label>
+</div>
+
+<!-- 第18题 -->
+<div class="question">
+<div class="q-title">18. 反垄断监管力度，你希望？</div>
+<label class="opt"><input type="radio" name="q18" value="-3"> 拆分所有大型企业，禁止规模化经营</label>
+<label class="opt"><input type="radio" name="q18" value="-2"> 常态化强力拆分龙头企业，防止做大</label>
+<label class="opt"><input type="radio" name="q18" value="-1"> 常态化反垄断稽查，防止滥用市场支配地位</label>
+<label class="opt"><input type="radio" name="q18" value="0"> 出现垄断危害后再依法处罚</label>
+<label class="opt"><input type="radio" name="q18" value="1"> 减少反垄断干预，允许企业做大做强</label>
+<label class="opt"><input type="radio" name="q18" value="2"> 企业规模越大效率越高，无需反垄断</label>
+<label class="opt"><input type="radio" name="q18" value="3"> 垄断是市场进化结果，强者垄断理所应当</label>
+</div>
+
+<!-- 第19题 -->
+<div class="question">
+<div class="q-title">19. 对于社会失业人群，你的看法？</div>
+<label class="opt"><input type="radio" name="q19" value="-3"> 统一安排集体岗位，杜绝无业状态</label>
+<label class="opt"><input type="radio" name="q19" value="-2"> 高失业补贴，保障无业者基础生活</label>
+<label class="opt"><input type="radio" name="q19" value="-1"> 失业救济+就业帮扶结合，引导再就业</label>
+<label class="opt"><input type="radio" name="q19" value="0"> 短期救济，督促尽快重新求职</label>
+<label class="opt"><input type="radio" name="q19" value="1"> 缩减失业补助，倒逼主动找工作</label>
+<label class="opt"><input type="radio" name="q19" value="2"> 失业是个人选择，不该由社会兜底供养</label>
+<label class="opt"><input type="radio" name="q19" value="3"> 无法就业就是社会淘汰的个体，无需帮扶</label>
+</div>
+
+<!-- 第20题 -->
+<div class="question">
+<div class="q-title">20. 科技行业监管方式，你选择？</div>
+<label class="opt"><input type="radio" name="q20" value="-3"> 国有全盘接管科技研发，禁止私企涉足核心技术</label>
+<label class="opt"><input type="radio" name="q20" value="-2"> 严格审批科技项目，限制民营企业创新扩张</label>
+<label class="opt"><input type="radio" name="q20" value="-1"> 划定安全红线，监管之下鼓励科创发展</label>
+<label class="opt"><input type="radio" name="q20" value="0"> 安全底线管控，政企协同创新</label>
+<label class="opt"><input type="radio" name="q20" value="1"> 放宽准入，依靠市场驱动科技迭代</label>
+<label class="opt"><input type="radio" name="q20" value="2"> 完全市场化科研，政府不插手技术方向</label>
+<label class="opt"><input type="radio" name="q20" value="3"> 资本主导科技发展，利益最大化优先</label>
+</div>
+
+<button id="submitBtn">查看完整立场测试结果</button>
+
+<div id="resultBox" class="result-box"></div>
+</div>
+
+<script>
+const submitBtn = document.getElementById('submitBtn');
+const resultBox = document.getElementById('resultBox');
+
+submitBtn.onclick = function(){
+  let totalScore = 0;
+  const answers = [
+    'q1','q2','q3','q4','q5','q6','q7','q8','q9','q10',
+    'q11','q12','q13','q14','q15','q16','q17','q18','q19','q20'
+  ];
+
+  for(let name of answers){
+    const sel = document.querySelector(`input[name="${name}"]:checked`);
+    if(!sel){
+      alert('请完成全部20道题目后再提交');
+      return;
+    }
+    totalScore += Number(sel.value);
+  }
+
+  let resClass, title, desc, quadrant;
+
+  // 总分区间重新适配20题满分范围：最低-60，最高+60
+  if(totalScore <= -25){
+    // 激进左翼（远左）
+    resClass = 'left';
+    title = '测试结果：激进左翼（远左）';
+    quadrant = '威权左翼 AuthLeft（强管控经济+集体威权秩序）';
+    desc = `【派系归属】激进左翼（原极左）
+核心特征：推崇彻底平均主义，否定私有制与自由市场，希望依靠强力统一管控抹平全部个体差异。
+同源流派：革命共产主义、托洛茨基主义、无政府共产主义
+⚠️提示：极端化思想容易脱离现实发展规律，现代社会需要公平与效率双向平衡。`;
+  }else if(totalScore <= -12){
+    // 正统左翼（硬左）
+    resClass = 'left';
+    title = '测试结果：正统左翼（硬左）';
+    quadrant = '偏向威权左翼 AuthLeft';
+    desc = `【派系归属】正统左翼（原强左）
+核心特征：坚定维护集体公平，主张强力约束资本扩张、推行高普惠福利，愿意为社会平等让步部分市场效率。
+同源流派：传统社会主义左翼、劳工本位左翼
+优势：共情弱势群体，社会正义感强烈；建议适度接纳市场经济合理价值。`;
+  }else if(totalScore < 0){
+    // 中间偏左（中左）
+    resClass = 'left';
+    title = '测试结果：中间偏左（中左，温和左翼）';
+    quadrant = '自由左翼 LibLeft（均衡管控经济+社会包容开放）';
+    desc = `【派系归属】中间偏左（原普左，社会民主主义）
+核心特征：追求合理社会公平，支持反垄断监管、完善基础社保，同时认可市场经济存在的必要性。
+衍生分支：文化左翼（平权、环保、多元包容）、新左派
+这是现实里最成熟稳健的左翼价值取向。`;
+  }else if(totalScore >= 0 && totalScore <= 5){
+    // 中立派
+    resClass = 'mid';
+    title = '测试结果：中立务实派（第三条道路）';
+    quadrant = '罗盘中心中立象限';
+    desc = `【派系归属】中立融合派
+核心特征：完全跳出西式左右二元对立思维，按需吸收左翼公平政策、右翼自由竞争优势，遇事折中权衡。
+同类理念：第三条道路、折中改良主义
+是理性程度很高的思考模式。`;
+  }else if(totalScore <= 15){
+    // 中间偏右（中右）
+    resClass = 'right';
+    title = '测试结果：中间偏右（中右，温和右翼）';
+    quadrant = '自由右翼 LibRight（自由市场+个人自由优先）';
+    desc = `【派系归属】中间偏右（原普右，温和保守主义）
+核心特征：推崇个人奋斗、私有产权保护与自由市场，同时保留基础社会保障兜底，拒绝纯粹弱肉强食。
+衍生分支：温和古典自由主义
+既尊重个体价值，也保留人文兜底的善意。`;
+  }else if(totalScore <= 28){
+    // 正统右翼（硬右）
+    resClass = 'right';
+    title = '测试结果：正统右翼（硬右）';
+    quadrant = '偏向威权右翼 AuthRight';
+    desc = `【派系归属】正统右翼（原强右，传统保守主义）
+核心特征：信奉自由竞争至上，认为贫富差距是能力分化的正常结果，反感过度福利与激进社会平权。
+同源流派：传统保守派、新保守主义
+优势：独立进取意识极强；建议多关注底层群体客观生存困境。`;
+  }else{
+    // 激进右翼（远右）
+    resClass = 'right';
+    title = '测试结果：激进右翼（远右）';
+    quadrant = '威权右翼 AuthRight（完全自由市场+保守排外秩序）';
+    desc = `【派系归属】激进右翼（原极右）
+核心特征：认同社会达尔文主义，坚信弱肉强食是天然法则，极易滋生排外、族群对立、阶层撕裂思想。
+同源流派：法西斯主义、新纳粹、极端民族主义、无政府资本主义
+⚠️警示：极端右翼思想会破坏社会包容稳定，现代文明建立在互助共存之上。`;
+  }
+
+  resultBox.className = `result-box ${resClass}`;
+  resultBox.style.display = 'block';
+  resultBox.innerHTML = `
+<div class="res-title">${title}</div>
+<div class="res-text">
+你的总得分：${totalScore}
+二维政治罗盘定位：${quadrant}
+
+${desc}
+</div>
+  `;
+}
+</script>
+</body>
+</html>

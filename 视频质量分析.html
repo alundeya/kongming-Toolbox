@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>B站视频质量检测器_空铭工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background-color: #fff;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+        .item {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #444;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #fb7299;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 17px;
+            cursor: pointer;
+            margin-top:10px;
+        }
+        button:hover {
+            background-color: #e66287;
+        }
+        #result {
+            margin-top:25px;
+            padding:20px;
+            border-radius:8px;
+            font-size:17px;
+            line-height:1.7;
+        }
+        .level-hit {
+            background:#fff2e6;
+            border:1px solid #ff9500;
+            color:#c25400;
+        }
+        .level-good {
+            background:#e6f7ff;
+            border:1px solid #1890ff;
+            color:#0050b3;
+        }
+        .level-normal {
+            background:#f0f2f5;
+            border:1px solid #8c8c8c;
+            color:#444;
+        }
+        .level-bad {
+            background:#fff1f0;
+            border:1px solid #f5222d;
+            color:#c41d1f;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>B站视频质量判断</h1>
+
+    <div class="item">
+        <label>视频总播放量</label>
+        <input type="number" id="play" placeholder="必填：视频整体播放总数" min="1">
+    </div>
+
+    <div class="item">
+        <label>点赞量</label>
+        <input type="number" id="like" placeholder="视频发布后的次日点赞量" min="0">
+    </div>
+
+    <div class="item">
+        <label>投币量</label>
+        <input type="number" id="coin" placeholder="次日投币量" min="0">
+    </div>
+
+    <div class="item">
+        <label>收藏量</label>
+        <input type="number" id="star" placeholder="次日收藏量" min="0">
+    </div>
+
+    <div class="item">
+        <label>评论数</label>
+        <input type="number" id="comment" placeholder="次日评论数" min="0">
+    </div>
+
+    <div class="item">
+        <label>完播率（%）</label>
+        <input type="number" id="playRate" placeholder="次日完播率 35代表35%" min="0" max="100">
+    </div>
+
+    <button onclick="checkVideoQuality()">开始判定视频质量</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+function checkVideoQuality(){
+    // 获取输入值
+    const play = Number(document.getElementById('play').value) || 0;
+    const like = Number(document.getElementById('like').value) || 0;
+    const coin = Number(document.getElementById('coin').value) || 0;
+    const star = Number(document.getElementById('star').value) || 0;
+    const comment = Number(document.getElementById('comment').value) || 0;
+    const playRate = Number(document.getElementById('playRate').value) || 0;
+
+    // 校验播放量必填
+    if (play <= 0) {
+        alert('请填写有效的视频总播放量，才能进行准确评估');
+        return;
+    }
+
+    // 计算各项互动率（百分比）
+    const coinRate = coin / play * 100;
+    const starRate = star / play * 100;
+    const likeRate = like / play * 100;
+    const commentRate = comment / play * 100;
+
+    // 修正后B站推荐权重优先级：完播率 > 投币 > 收藏 > 评论 > 点赞
+    let score = 0;
+    score += playRate * 5;
+    score += coinRate * 4;
+    score += starRate * 2.5;
+    score += commentRate * 1.8;
+    score += likeRate * 1;
+
+    let level, className, tips;
+
+    if(score >= 120){
+        level = "🔥 爆款潜力视频";
+        className = "level-hit";
+        tips = "整体互动数据远超分区均值，平台会持续叠加推荐流量，极易登上热门榜单。";
+    }else if(score >= 70){
+        level = "✅ 优质推荐视频";
+        className = "level-good";
+        tips = "互动数据达标，系统正常稳步推流，优化开头3秒可以冲击更高流量。";
+    }else if(score >= 25){
+        level = "⚪ 普通基础视频";
+        className = "level-normal";
+        tips = "刚好达到平台基础放行门槛，竞争力偏弱，建议优化封面标题提升点击率。";
+    }else{
+        level = "❌ 低质限流视频";
+        className = "level-bad";
+        tips = "用户留存与认可数据过低，系统会缩减推荐曝光，建议更换选题重新创作。";
+    }
+
+    // 渲染结果
+    const resBox = document.getElementById('result');
+    resBox.className = className;
+    resBox.innerHTML = `
+        <strong>综合流量评分：${score.toFixed(1)} 分</strong><br>
+        <strong>评级结果：${level}</strong><br>
+        分析建议：${tips}
+    `;
+}
+</script>
+</body>
+</html>

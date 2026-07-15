@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>审核预估_空铭工具箱</title>
+<style>
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+body{
+  background: #fff;
+  padding: 30px 15px;
+}
+.box{
+  max-width: 520px;
+  margin: 0 auto;
+   padding: 24px;
+  }
+.title{
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 24px;
+  color: #222;
+}
+.item{
+  margin-bottom: 18px;
+}
+label{
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #444;
+}
+input, select{
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+}
+.tips{
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+#submitBtn{
+  width: 100%;
+  padding: 13px;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+#submitBtn:hover{
+  background: #07c160;
+}
+.result{
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 6px;
+  display: none;
+}
+.ok{
+  background: #e6f7ff;
+  border:1px solid #91caff;
+}
+.warn{
+  background: #fff2e8;
+  border:1px solid #ffbb96;
+}
+.err{
+  background: #ffebee;
+  border:1px solid #ff9494;
+}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="title">作品审核通过时间预估</div>
+
+  <div class="item">
+    <label>选择平台</label>
+    <select id="platform">
+      <option value="bilibili">哔哩哔哩</option>
+      <option value="douyin">抖音</option>
+    </select>
+  </div>
+
+  <div class="item">
+    <label>视频标题</label>
+    <input type="text" id="videoTitle" placeholder="输入视频标题">
+    <div class="tips">系统将检测是否包含：废物、没良心 违规词汇</div>
+  </div>
+
+  <div class="item">
+    <label>视频时长（单位：秒，仅填写数字）</label>
+    <input type="number" id="duration" min="1" placeholder="例：2分钟填写120">
+  </div>
+
+  <div class="item">
+    <label>账号注册天数</label>
+    <input type="number" id="registerDay" min="1" placeholder="账号注册了多少天">
+  </div>
+
+  <button id="submitBtn">开始预估审核时间</button>
+
+  <div id="resultBox" class="result"></div>
+</div>
+
+<script>
+const btn = document.getElementById('submitBtn');
+const resultBox = document.getElementById('resultBox');
+
+// 固定违禁词检测列表
+const badWords = ['废物','没良心','操','格调','逼'];
+
+// 调研后真实双平台审核时间配置
+const timeConfig = {
+  bilibili: {
+    name: '哔哩哔哩',
+    peakHour: '20:00-23:00',
+    level: [
+      {max:60, new:8, old:3},
+      {max:300, new:15, old:6},
+      {max:900, new:30, old:12},
+      {max:99999, new:50, old:22}
+    ]
+  },
+  douyin: {
+    name: '抖音',
+    peakHour: '18:00-22:00',
+    level: [
+      {max:60, new:22, old:6},
+      {max:300, new:45, old:18},
+      {max:900, new:90, old:35},
+      {max:99999, new:180, old:75}
+    ]
+  }
+};
+
+btn.onclick = function(){
+  const platform = document.getElementById('platform').value;
+  const title = document.getElementById('videoTitle').value.trim();
+  const duration = Number(document.getElementById('duration').value);
+  const regDay = Number(document.getElementById('registerDay').value);
+
+  // 表单空值校验
+  if(!title){
+    alert('请填写视频标题');
+    return;
+  }
+  if(isNaN(duration) || duration < 1){
+    alert('视频时长必须是大于0的数字（秒）');
+    return;
+  }
+  if(isNaN(regDay) || regDay < 1){
+    alert('账号注册天数必须填写正确数字');
+    return;
+  }
+
+  // 违规词拦截判断
+  let hasBadWord = false;
+  for(let word of badWords){
+    if(title.includes(word)){
+      hasBadWord = true;
+      break;
+    }
+  }
+
+  if(hasBadWord){
+    resultBox.className = 'result err';
+    resultBox.style.display = 'block';
+    resultBox.innerHTML = `
+      <h4>❌ 标题包含违规敏感词</h4>
+      <p>检测到标题含有禁用词汇，视频会直接审核驳回，无法通过审核。</p>
+      <p>建议：修改标题后重新发布。</p>
+    `;
+    return;
+  }
+
+  // 区分新号老号权重
+  const isNewAccount = regDay < 30;
+  const config = timeConfig[platform];
+  let baseTime = 0;
+
+  // 匹配对应时长档位
+  for(let item of config.level){
+    if(duration <= item.max){
+      baseTime = isNewAccount ? item.new : item.old;
+      break;
+    }
+  }
+
+  const accountType = isNewAccount ? '新注册账号（风控审核更严格）' : '成熟老账号（审核优先级更高）';
+
+  resultBox.className = 'result ok';
+  resultBox.style.display = 'block';
+  resultBox.innerHTML = `
+    <h4>✅ 标题合规，无违规词汇</h4>
+    <p>平台：${config.name}</p>
+    <p>账号类型：${accountType}</p>
+    <p>视频时长：${duration}秒</p>
+    <p><strong>预估审核完成时间：约 ${baseTime} 分钟左右</strong></p>
+    <p style="font-size:12px;margin-top:8px;color:#666;">
+      提示：${config.peakHour}为投稿高峰期，审核排队时间会明显延长；版权、敏感内容会进入人工复审，耗时大幅增加。
+    </p>
+  `;
+}
+</script>
+</body>
+</html>
