@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>随心笔记本_空铭工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
+html,body{height:100%;overflow:hidden;background:#f7f7f7;color:#333;}
+.app{height:100%;position:relative;overflow:hidden;}
+.page{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;transition:transform 0.24s ease-out;will-change:transform;}
+/* 登录页默认显示，隐藏时彻底移出可视区域+禁止事件 */
+.login-page{
+  z-index:999;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.login-page.hidden{
+  transform: translateY(-100%);
+  pointer-events:none;
+  opacity:0;
+}
+.list-page{transform:translateX(0);}
+.edit-page{transform:translateX(100%);}
+.page.active{transform:translateX(0);}
+.nav{height:46px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 12px;position:sticky;top:0;z-index:99;}
+.nav-btn{font-size:15px;color:#07c160;padding:6px 10px;background:none;border:none;cursor:pointer;}
+.nav-title{font-size:17px;font-weight:500;}
+.note-list{height:calc(100% - 46px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.note-item{padding:14px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background 0.15s;}
+.note-item:active{background:#f2f2f2;}
+.note-title{font-size:16px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.note-time{font-size:12px;color:#999;}
+.add-btn{position:fixed;right:20px;bottom:24px;width:52px;height:52px;border-radius:50%;background:#07c160;color:#fff;border:none;font-size:28px;box-shadow:0 2px 12px rgba(7,193,96,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.edit-wrap{height:calc(100% - 46px);display:flex;flex-direction:column;}
+.input-title{padding:14px 16px;font-size:18px;border:none;border-bottom:1px solid #eee;outline:none;}
+.text-content{flex:1;padding:14px 16px;font-size:16px;border:none;outline:none;resize:none;}
+.empty-tip{height:100%;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}
+/* 登录页样式 */
+.login-title{font-size:22px;color:#07c160;margin-bottom:32px;}
+.pwd-input{width:100%;padding:12px 14px;border:1px solid #eee;border-radius:8px;font-size:16px;margin-bottom:16px;outline:none;}
+.login-submit{width:100%;padding:12px;background:#07c160;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;}
+.login-submit:active{opacity:0.85;}
+.tip-text{font-size:13px;color:#aaa;margin-top:10px;}
+</style>
+</head>
+
+<body>
+<div class="app">
+    <!-- 密码登录页面（最高层级） -->
+    <div class="page login-page" id="loginPage">
+        <div class="login-title">加密笔记本 解锁</div>
+        <input class="pwd-input" id="pwdInput" type="password" placeholder="输入解锁密码">
+        <button class="login-submit" id="unlockBtn">解锁进入笔记</button>
+        <div class="tip-text">初始密码：123456，进入后可修改密码</div>
+    </div>
+
+    <!-- 笔记列表页 -->
+    <div class="page list-page active" id="listMainPage">
+        <div class="nav">
+            <button class="nav-btn" id="changePwdBtn">改密码</button>
+            <div class="nav-title">笔记</div>
+            <button class="nav-btn" id="clearBtn">清空</button>
+        </div>
+        <div class="note-list" id="listBox"></div>
+        <button class="add-btn" id="addBtn">+</button>
+    </div>
+
+    <!-- 编辑页 -->
+    <div class="page edit-page">
+        <div class="nav">
+            <button class="nav-btn" id="backBtn">返回</button>
+            <div class="nav-title">编辑笔记</div>
+            <button class="nav-btn" id="saveBtn">保存</button>
+        </div>
+        <div class="edit-wrap">
+            <input class="input-title" id="titleInput" placeholder="标题">
+            <textarea class="text-content" id="contentInput" placeholder="在这里记录内容..."></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+// 简易文本加密器
+const SecretTool = {
+    key: "noteLock2026secret",
+    encrypt(str) {
+        let s = "";
+        for (let i = 0; i < str.length; i++) {
+            s += String.fromCharCode(str.charCodeAt(i) + this.key.charCodeAt(i % this.key.length));
+        }
+        return btoa(s);
+    },
+    decrypt(cipher) {
+        try {
+            let s = atob(cipher);
+            let raw = "";
+            for (let i = 0; i < s.length; i++) {
+                raw += String.fromCharCode(s.charCodeAt(i) - this.key.charCodeAt(i % this.key.length));
+            }
+            return raw;
+        } catch (err) {
+            return "";
+        }
+    }
+};
+
+// 本地读写封装（全部加密存取）
+function getStorageData() {
+    let pwdCipher = localStorage.getItem("noteLockPwd");
+    let noteCipher = localStorage.getItem("wxNotes");
+    const password = pwdCipher ? SecretTool.decrypt(pwdCipher) : "123456";
+    let noteList = [];
+    if (noteCipher) {
+        let rawText = SecretTool.decrypt(noteCipher);
+        noteList = JSON.parse(rawText) || [];
+    }
+    return { password, noteList };
+}
+function saveStorageData(pwd, notesArr) {
+    localStorage.setItem("noteLockPwd", SecretTool.encrypt(pwd));
+    localStorage.setItem("wxNotes", SecretTool.encrypt(JSON.stringify(notesArr)));
+}
+
+// DOM元素
+const loginPage = document.getElementById("loginPage");
+const listMainPage = document.getElementById("listMainPage");
+const listPage = document.querySelector('.list-page');
+const editPage = document.querySelector('.edit-page');
+const listBox = document.getElementById('listBox');
+const titleInput = document.getElementById('titleInput');
+const contentInput = document.getElementById('contentInput');
+const pwdInput = document.getElementById("pwdInput");
+const unlockBtn = document.getElementById("unlockBtn");
+const changePwdBtn = document.getElementById("changePwdBtn");
+
+let currentId = null;
+
+// 读取笔记数组
+function getNotes() {
+    return getStorageData().noteList;
+}
+// 加密保存笔记数组
+function saveNotes(arr) {
+    const data = getStorageData();
+    saveStorageData(data.password, arr);
+}
+
+// 渲染列表
+function renderList() {
+    const notes = getNotes();
+    if (notes.length === 0) {
+        listBox.innerHTML = '<div class="empty-tip">暂无笔记，点击右下角加号创建</div>';
+        return;
+    }
+    listBox.innerHTML = notes.map(item => `
+        <div class="note-item" data-id="${item.id}">
+            <div class="note-title">${item.title || '无标题'}</div>
+            <div class="note-time">${item.time}</div>
+        </div>
+    `).join('');
+    document.querySelectorAll('.note-item').forEach(el => {
+        el.onclick = () => openEdit(el.dataset.id);
+    })
+}
+
+// 打开编辑页
+function openEdit(id = null) {
+    currentId = id;
+    if (id) {
+        const note = getNotes().find(v => v.id === id);
+        titleInput.value = note.title;
+        contentInput.value = note.content;
+    } else {
+        titleInput.value = '';
+        contentInput.value = '';
+    }
+    listPage.classList.remove('active');
+    editPage.classList.add('active');
+}
+
+// 返回列表页
+function backList() {
+    editPage.classList.remove('active');
+    listPage.classList.add('active');
+    renderList();
+}
+
+// 保存笔记
+function saveNote() {
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+    if (!title && !content) return alert('内容不能为空');
+
+    const notes = getNotes();
+    const time = new Date().toLocaleString();
+
+    if (currentId) {
+        const index = notes.findIndex(v => v.id === currentId);
+        notes[index] = { ...notes[index], title, content, time };
+    } else {
+        notes.unshift({
+            id: Date.now().toString(),
+            title,
+            content,
+            time
+        })
+    }
+    saveNotes(notes);
+    backList();
+}
+
+// 解锁登录【修复核心】
+unlockBtn.onclick = function () {
+    const storage = getStorageData();
+    const inputPwd = pwdInput.value.trim();
+    if (inputPwd === storage.password) {
+        // 添加hidden类：上滑移出屏幕+禁止所有点击事件，彻底不遮挡底层
+        loginPage.classList.add("hidden");
+        // 延迟渲染列表，强制浏览器重绘页面
+        setTimeout(()=>{
+            renderList();
+        },50)
+    } else {
+        alert("密码错误，无法解锁！");
+        pwdInput.value = "";
+    }
+}
+
+// 修改密码
+changePwdBtn.onclick = function () {
+    const newPwd = prompt("请输入新密码（至少3位）：");
+    if (!newPwd || newPwd.length < 3) {
+        alert("密码太短，至少3个字符");
+        return;
+    }
+    const data = getStorageData();
+    saveStorageData(newPwd, data.noteList);
+    alert("密码修改成功，下次打开需要新密码！");
+}
+
+// 绑定原有按钮事件
+document.getElementById('addBtn').onclick = () => openEdit();
+document.getElementById('backBtn').onclick = backList;
+document.getElementById('saveBtn').onclick = saveNote;
+document.getElementById('clearBtn').onclick = () => {
+    if (confirm('确定清空所有笔记？无法恢复')) {
+        saveNotes([]);
+        renderList();
+    }
+}
+</script>
+</body>
+</html>

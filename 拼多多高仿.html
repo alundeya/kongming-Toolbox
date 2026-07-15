@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>高仿拼多多购物页面_空铭工具箱</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+}
+body{
+    background:#ffffff;
+    font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+    padding-bottom:130px;
+}
+/* 顶部自定义配置区 */
+.set-wrapper{
+    padding:15px;
+    border-bottom:10px solid #f5f5f5;
+}
+.set-tip{
+    font-size:14px;
+    color:#999;
+    margin-bottom:8px;
+}
+.input-box{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #eeeeee;
+    border-radius:8px;
+    font-size:15px;
+    margin-bottom:10px;
+    outline:none;
+}
+.input-box:focus{
+    border-color:#07C160;
+}
+/* 商品展示大图 */
+.goods-pic{
+    width:100%;
+    aspect-ratio:1/1;
+    background:#f3f3f3;
+    object-fit:cover;
+    display:block;
+}
+/* 商品信息区域 */
+.info-area{
+    padding:14px;
+}
+.goods-name{
+    font-size:20px;
+    color:#111;
+    line-height:1.4;
+    margin-bottom:12px;
+}
+.price-row{
+    display:flex;
+    align-items: baseline;
+    gap:6px;
+    margin-bottom:16px;
+}
+.price-rmb{
+    font-size:16px;
+    color:#f53f3f;
+}
+.price-number{
+    font-size:28px;
+    color:#f53f3f;
+    font-weight:bold;
+}
+/* 款式选择 */
+.style-label{
+    font-size:16px;
+    color:#222;
+    margin:20px 0 10px;
+}
+.style-container{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+.style-item{
+    padding:7px 18px;
+    border:1px solid #dddddd;
+    border-radius:6px;
+    font-size:14px;
+    cursor:pointer;
+}
+.style-item.active{
+    border-color:#07C160;
+    background:#ecfdf3;
+    color:#07C160;
+}
+/* 底部固定下单栏 */
+.bottom-order-bar{
+    position:fixed;
+    left:0;
+    bottom:0;
+    width:100%;
+    height:65px;
+    background:#fff;
+    border-top:1px solid #eee;
+    display:flex;
+    align-items:center;
+    padding:0 15px;
+    gap:12px;
+}
+.cart-button{
+    flex:1;
+    height:44px;
+    border-radius:3px;
+    border:1px solid #f5f5f5;
+    color:block;
+    background:#fff;
+    font-size:15px;
+    cursor:pointer;
+}
+.buy-button{
+    flex:1.3;
+    height:44px;
+    border-radius:3px;
+    background:#E02124;
+    color:#fff;
+    border:none;
+    font-size:15px;
+    cursor:pointer;
+}
+/* 支付弹窗遮罩 */
+.mask-layer{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+.pop-window{
+    width:88%;
+    max-width:340px;
+    background:#fff;
+    border-radius:14px;
+    padding:30px 20px;
+    text-align:center;
+}
+.success-icon{
+    font-size:55px;
+    color:#07C160;
+    margin-bottom:10px;
+}
+.pop-title{
+    font-size:19px;
+    color:#222;
+    margin-bottom:8px;
+}
+.pop-desc{
+    font-size:14px;
+    color:#777;
+    margin-bottom:25px;
+}
+.confirm-btn{
+    padding:10px 35px;
+    background:#07C160;
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+    
+}
+</style>
+</head>
+<body>
+<!-- 自定义配置区：图片直链、标题、价格、新增款式 -->
+<div class="set-wrapper">
+    <div class="set-tip">自定义设置（修改实时生效）</div>
+    <div class="set-tip">本工具仅供娱乐，切勿违法违规！</div>
+    <div class="set-tip">本工具仅供娱乐，切勿违法违规！</div>
+    <div class="set-tip">本工具仅供娱乐，切勿违法违规！</div>
+    <input class="input-box" id="imgLink" placeholder="粘贴商品图片直链，输入后自动更换商品图">
+    <input class="input-box" id="titleInput" placeholder="输入商品标题" value="">
+    <input class="input-box" id="priceInput" type="number" placeholder="商品售价" value="">
+    <input class="input-box" id="addStyleInput" placeholder="输入款式名称，按回车添加款式">
+</div>
+
+<!-- 商品大图展示 -->
+<img class="goods-pic" id="previewImg" src="https://zh.minecraft.wiki/images/Diamond_Pickaxe_JE3_BE3.png?40f8b" alt="商品预览图">
+
+<!-- 商品信息 -->
+<div class="info-area">
+    <h2 class="goods-name" id="showTitle">商品标题，可自定义</h2>
+    <div class="price-row">
+        <span class="price-rmb">¥</span>
+        <span class="price-number" id="showPrice">79.8</span>
+    </div>
+
+    <div class="style-label">选择款式</div>
+    <div class="style-container" id="styleBox">
+        </div>
+</div>
+
+<!-- 底部操作栏 -->
+<div class="bottom-order-bar">
+    <button class="cart-button" id="cartBtn">加入购物车</button>
+    <button class="buy-button" id="buyBtn">立即购买</button>
+</div>
+
+<!-- 微信支付成功弹窗 -->
+<div class="mask-layer" id="payMask">
+    <div class="pop-window">
+        <div class="success-icon">✓</div>
+        <div class="pop-title">支付成功</div>
+        <div class="pop-desc">订单创建完成，商家尽快安排发货</div>
+        <button class="confirm-btn" id="closePop">确定</button>
+    </div>
+</div>
+
+<script>
+// 获取全部DOM元素
+const imgLink = document.getElementById('imgLink');
+const previewImg = document.getElementById('previewImg');
+const titleInput = document.getElementById('titleInput');
+const showTitle = document.getElementById('showTitle');
+const priceInput = document.getElementById('priceInput');
+const showPrice = document.getElementById('showPrice');
+const addStyleInput = document.getElementById('addStyleInput');
+const styleBox = document.getElementById('styleBox');
+const cartBtn = document.getElementById('cartBtn');
+const buyBtn = document.getElementById('buyBtn');
+const payMask = document.getElementById('payMask');
+const closePop = document.getElementById('closePop');
+
+// 1. 输入图片直链，实时替换商品图
+imgLink.addEventListener('input', function(){
+    const url = this.value.trim();
+    if(url){
+        previewImg.src = url;
+    }else{
+        previewImg.src = "";
+    }
+})
+
+// 2. 实时更新商品标题
+titleInput.addEventListener('input', function(){
+    showTitle.innerText = this.value;
+})
+
+// 3. 实时更新商品价格
+priceInput.addEventListener('input', function(){
+    showPrice.innerText = this.value;
+})
+
+// 4. 款式点击切换选中状态
+styleBox.addEventListener('click', function(e){
+    if(e.target.classList.contains('style-item')){
+        document.querySelectorAll('.style-item').forEach(item=>{
+            item.classList.remove('active');
+        })
+        e.target.classList.add('active');
+    }
+})
+
+// 5. 回车新增款式
+addStyleInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && this.value.trim() !== ""){
+        const newStyle = document.createElement('div');
+        newStyle.className = 'style-item';
+        newStyle.innerText = this.value.trim();
+        styleBox.appendChild(newStyle);
+        this.value = "";
+    }
+})
+
+// 6. 加入购物车提示
+cartBtn.addEventListener('click', ()=>{
+    alert('商品已成功加入购物车！');
+})
+
+// 7. 立即购买弹出支付成功弹窗
+buyBtn.addEventListener('click', ()=>{
+    payMask.style.display = 'flex';
+})
+
+// 8. 关闭弹窗
+closePop.addEventListener('click', ()=>{
+    payMask.style.display = 'none';
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>漫画创作_空铭工具箱</title>
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  outline:none !important;
+}
+body{
+  background:#fff;
+  padding:16px;
+  max-width:850px;
+  margin:0 auto;
+}
+h1{
+  color:#07C160;
+  text-align:center;
+  margin-bottom:20px;
+  font-size:22px;
+}
+.area{
+  margin-bottom:20px;
+}
+label{
+  display:block;
+  font-size:14px;
+  color:#333;
+  margin-bottom:6px;
+}
+input,select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid #eee;
+  border-radius:6px;
+  font-size:15px;
+}
+.wrap-canvas-row{
+  display:flex;
+  gap:10px;
+}
+.canvas-box{
+  flex:1;
+  border:1px solid #eee;
+  border-radius:8px;
+  overflow:hidden;
+  background:#fff;
+}
+#canvasLeft,#canvasRight{
+  width:100%;
+  background:#fff;
+  display:block;
+}
+.hide{
+  display:none !important;
+}
+.btn-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+button{
+  padding:10px 14px;
+  border:none;
+  border-radius:6px;
+  font-size:14px;
+  cursor:pointer;
+  flex:1;
+  min-width:80px;
+}
+.green{
+  background:#07C160;
+  color:#fff;
+}
+.grey{
+  background:#f3f3f3;
+  color:#222;
+}
+button:active{opacity:0.85;}
+.split{
+  height:1px;
+  background:#eee;
+  margin:24px 0;
+}
+.comic-item{
+  padding:12px;
+  border:1px solid #eee;
+  border-radius:8px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.comic-name{
+  font-size:15px;
+}
+.color-pick{
+  display:flex;
+  gap:6px;
+  margin:8px 0;
+}
+.color-block{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:1px solid #ccc;
+}
+.tip-text{
+  color:#999;
+  font-size:13px;
+  margin-top:4px;
+}
+</style>
+</head>
+<body>
+<h1>本地双格漫画创作库</h1>
+
+<!-- 新建漫画 -->
+<div class="area">
+  <label>漫画标题</label>
+  <input type="text" id="comicTitle" placeholder="输入漫画名字">
+  <div class="btn-row">
+    <button class="green" onclick="createNewComic()">新建空白漫画</button>
+    <button class="grey" onclick="setLayoutSingle()">单格画布</button>
+    <button class="grey" onclick="setLayoutDouble()">左右双格画布</button>
+  </div>
+  <div class="tip-text">切换双格即可同时绘制左右两幅漫画分镜</div>
+</div>
+
+<div class="split"></div>
+
+<!-- 绘画工具栏 -->
+<div class="area">
+  <label>绘画工具</label>
+  <div class="color-pick">
+    <div class="color-block" style="background:#000" onclick="setPenColor('#000')"></div>
+    <div class="color-block" style="background:#ff3333" onclick="setPenColor('#ff3333')"></div>
+    <div class="color-block" style="background:#07C160" onclick="setPenColor('#07C160')"></div>
+    <div class="color-block" style="background:#3388ff" onclick="setPenColor('#3388ff')"></div>
+    <div class="color-block" style="background:#fff;border:2px solid #999" onclick="setPenColor('#fff')"></div>
+  </div>
+  <select id="penSize" onchange="setPenWidth()">
+    <option value="2">细线条</option>
+    <option value="5" selected>正常画笔</option>
+    <option value="12">粗马克笔</option>
+  </select>
+  <div class="btn-row">
+    <button class="green" onclick="toolPen()">画笔</button>
+    <button class="grey" onclick="toolEraser()">橡皮</button>
+    <button class="grey" onclick="clearAllCanvas()">清空全部画布</button>
+  </div>
+</div>
+
+<!-- 画布区域 左右双格 -->
+<div class="area wrap-canvas-row">
+  <div class="canvas-box">
+    <canvas id="canvasLeft" width="400" height="450"></canvas>
+  </div>
+  <div class="canvas-box" id="boxRight">
+    <canvas id="canvasRight" width="400" height="450"></canvas>
+  </div>
+</div>
+
+<div class="btn-row">
+  <button class="green" onclick="saveCurrentComic()">保存漫画</button>
+  <button class="grey" onclick="exportImg()">导出整张图片分享</button>
+</div>
+
+<div class="split"></div>
+
+<!-- 本地漫画列表 -->
+<div class="area">
+  <label>我的本地漫画库（自动存在浏览器）</label>
+  <div id="comicList"></div>
+</div>
+
+<script>
+// 双画布初始化
+const canvasLeft = document.getElementById('canvasLeft');
+const ctxL = canvasLeft.getContext('2d');
+const canvasRight = document.getElementById('canvasRight');
+const ctxR = canvasRight.getContext('2d');
+const boxRight = document.getElementById('boxRight');
+
+let drawFlag = false;
+let penColor = "#000";
+let penWidth = 5;
+let toolType = "pen";
+let currentComicId = null;
+let comicDataList = JSON.parse(localStorage.getItem("localComicList")) || [];
+let currentLayout = "double"; // double双格 single单格
+
+// 布局切换
+function setLayoutSingle(){
+  currentLayout = "single";
+  boxRight.classList.add("hide");
+}
+function setLayoutDouble(){
+  currentLayout = "double";
+  boxRight.classList.remove("hide");
+}
+
+// 画笔/橡皮切换
+function toolPen(){toolType="pen";}
+function toolEraser(){toolType="eraser";}
+function setPenColor(c){penColor=c;}
+function setPenWidth(){penWidth=Number(document.getElementById("penSize").value);}
+
+// ========== 左侧画布绘画 ==========
+canvasLeft.onmousedown = (e)=>startDraw(e, ctxL, canvasLeft);
+canvasLeft.onmousemove = (e)=>draw(e, ctxL, canvasLeft);
+canvasLeft.onmouseup = stopDraw;
+canvasLeft.onmouseleave = stopDraw;
+canvasLeft.ontouchstart = (e)=>touchStart(e, ctxL, canvasLeft);
+canvasLeft.ontouchmove = (e)=>touchDraw(e, ctxL, canvasLeft);
+canvasLeft.ontouchend = stopDraw;
+
+// ========== 右侧画布绘画（新增独立绘图逻辑） ==========
+canvasRight.onmousedown = (e)=>startDraw(e, ctxR, canvasRight);
+canvasRight.onmousemove = (e)=>draw(e, ctxR, canvasRight);
+canvasRight.onmouseup = stopDraw;
+canvasRight.onmouseleave = stopDraw;
+canvasRight.ontouchstart = (e)=>touchStart(e, ctxR, canvasRight);
+canvasRight.ontouchmove = (e)=>touchDraw(e, ctxR, canvasRight);
+canvasRight.ontouchend = stopDraw;
+
+function getPos(e, cvs){
+  const rect = cvs.getBoundingClientRect();
+  const x = (e.clientX || e.touches[0].clientX) - rect.left;
+  const y = (e.clientY || e.touches[0].clientY) - rect.top;
+  return {x,y};
+}
+function startDraw(e, ctx, cvs){
+  drawFlag = true;
+  const p = getPos(e, cvs);
+  ctx.beginPath();
+  ctx.moveTo(p.x,p.y);
+}
+function touchStart(e, ctx, cvs){e.preventDefault();startDraw(e, ctx, cvs);}
+function draw(e, ctx, cvs){
+  if(!drawFlag) return;
+  const p = getPos(e, cvs);
+  ctx.lineCap = "round";
+  ctx.lineWidth = penWidth;
+  if(toolType === "eraser"){
+    ctx.globalCompositeOperation = "destination-out";
+  }else{
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = penColor;
+  }
+  ctx.lineTo(p.x,p.y);
+  ctx.stroke();
+}
+function touchDraw(e, ctx, cvs){e.preventDefault();draw(e, ctx, cvs);}
+function stopDraw(){drawFlag=false;}
+
+// 清空所有画布
+function clearAllCanvas(){
+  ctxL.clearRect(0,0,canvasLeft.width,canvasLeft.height);
+  ctxR.clearRect(0,0,canvasRight.width,canvasRight.height);
+}
+
+// 创建新漫画（同时保存左右两张图）
+function createNewComic(){
+  const title = document.getElementById("comicTitle").value.trim() || "未命名漫画";
+  const id = Date.now().toString();
+  const leftImg = canvasLeft.toDataURL("image/png");
+  const rightImg = canvasRight.toDataURL("image/png");
+  const newComic = {
+    id,
+    title,
+    left:leftImg,
+    right:rightImg,
+    layout:currentLayout,
+    createTime:new Date().toLocaleString()
+  };
+  comicDataList.unshift(newComic);
+  saveLocalStorage();
+  renderComicList();
+  clearAllCanvas();
+  document.getElementById("comicTitle").value = "";
+  alert("创建成功！左右画布均可自由绘画");
+}
+
+// 保存当前漫画
+function saveCurrentComic(){
+  if(!currentComicId){
+    alert("请先新建漫画");
+    return;
+  }
+  const leftImg = canvasLeft.toDataURL("image/png");
+  const rightImg = canvasRight.toDataURL("image/png");
+  const idx = comicDataList.findIndex(item=>item.id === currentComicId);
+  if(idx !== -1){
+    comicDataList[idx].left = leftImg;
+    comicDataList[idx].right = rightImg;
+    comicDataList[idx].layout = currentLayout;
+  }
+  saveLocalStorage();
+  alert("左右分镜全部保存完成！");
+}
+
+// 写入本地存储
+function saveLocalStorage(){
+  localStorage.setItem("localComicList",JSON.stringify(comicDataList));
+}
+
+// 渲染漫画列表
+function renderComicList(){
+  const wrap = document.getElementById("comicList");
+  if(comicDataList.length === 0){
+    wrap.innerHTML = "<div style='color:#888'>暂无漫画，创建你的第一篇</div>";
+    return;
+  }
+  let html = "";
+  comicDataList.forEach(item=>{
+    html += `
+    <div class="comic-item">
+      <div class="comic-name">${item.title}<br><small style="color:#888">${item.createTime}</small></div>
+      <div style="display:flex;gap:6px">
+        <button class="grey" onclick="openComic('${item.id}')">打开编辑</button>
+        <button class="grey" onclick="deleteComic('${item.id}')">删除</button>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+// 读取旧漫画到左右画布
+function openComic(id){
+  const target = comicDataList.find(item=>item.id === id);
+  if(!target) return;
+  currentComicId = id;
+  // 切换当初保存的布局
+  if(target.layout === "single") setLayoutSingle();
+  else setLayoutDouble();
+
+  clearAllCanvas();
+  // 绘制左画布
+  const imgL = new Image();
+  imgL.onload = ()=> ctxL.drawImage(imgL,0,0,canvasLeft.width,canvasLeft.height);
+  imgL.src = target.left;
+
+  // 绘制右画布
+  const imgR = new Image();
+  imgR.onload = ()=> ctxR.drawImage(imgR,0,0,canvasRight.width,canvasRight.height);
+  imgR.src = target.right;
+  alert("已载入漫画，左右画布均可修改");
+}
+
+// 删除漫画
+function deleteComic(id){
+  comicDataList = comicDataList.filter(item=>item.id !== id);
+  saveLocalStorage();
+  renderComicList();
+  if(currentComicId === id) currentComicId = null;
+  clearAllCanvas();
+  alert("删除完成");
+}
+
+// 导出整张图片
+function exportImg(){
+  const link = document.createElement("a");
+  link.download = "双格漫画_"+Date.now()+".png";
+  // 优先导出左画布，双格模式可自行截图整张页面
+  link.href = canvasLeft.toDataURL("image/png");
+  link.click();
+}
+
+// 页面加载初始化
+window.onload = ()=>{
+  renderComicList();
+}
+</script>
+</body>
+</html>

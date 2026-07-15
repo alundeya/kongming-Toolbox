@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>本地图床_空铭工具箱</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+}
+body{
+    background:#fff;
+    font-family: system-ui,Microsoft YaHei,sans-serif;
+    padding:16px;
+    max-width:900px;
+    margin:0 auto;
+}
+h1{
+    text-align:center;
+    color:#222;
+    margin-bottom:24px;
+    font-size:22px;
+}
+.upload-box{
+    border:2px dashed #ddd;
+    border-radius:10px;
+    padding:40px 20px;
+    text-align:center;
+    cursor:pointer;
+    margin-bottom:20px;
+    transition:0.2s;
+}
+.upload-box:hover{
+    border-color:#07C160;
+}
+#fileInput{
+    display:none;
+}
+.green-btn{
+    background:#07C160;
+    color:#fff;
+    border:none;
+    padding:10px 22px;
+    border-radius:8px;
+    font-size:15px;
+    cursor:pointer;
+}
+.del-btn{
+    background:#f53f3f;
+    color:#fff;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:13px;
+    cursor:pointer;
+}
+.clear-all{
+    background:#666;
+    margin:10px 0 30px;
+}
+.gallery-title{
+    font-size:18px;
+    margin:30px 0 12px;
+    color:#333;
+}
+.gallery-wrap{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+    gap:14px;
+}
+.img-card{
+    border:1px solid #eee;
+    border-radius:8px;
+    overflow:hidden;
+}
+.img-card img{
+    width:100%;
+    height:120px;
+    object-fit:cover;
+    display:block;
+}
+.img-info{
+    padding:8px;
+}
+.id-text{
+    font-size:12px;
+    color:#777;
+    word-break:break-all;
+    margin-bottom:6px;
+}
+.copy-link{
+    font-size:12px;
+    color:#07C160;
+    cursor:pointer;
+    margin-bottom:6px;
+    display:block;
+}
+/* 单图预览页面（url带id时） */
+.view-single{
+    display:none;
+    text-align:center;
+}
+.view-single img{
+    max-width:100%;
+    max-height:70vh;
+    border-radius:8px;
+    margin:20px 0;
+}
+.back-btn{
+    display:inline-block;
+    margin-bottom:20px;
+}
+.tip{
+    font-size:13px;
+    color:#999;
+    margin:8px 0;
+}
+</style>
+</head>
+<body>
+<h1>本地浏览器图床</h1>
+
+<!-- 单图预览区域（访问 ?id=时间戳 自动显示） -->
+<div class="view-single" id="singleView">
+    <button class="green-btn back-btn" onclick="location.href='local-img-bed.html'">返回图库</button>
+    <div class="tip">当前图片ID：<span id="viewId"></span></div>
+    <img id="viewImg" alt="预览图片">
+    <div>
+        <span class="copy-link" id="copyViewLink">复制当前图片链接</span>
+    </div>
+</div>
+
+<!-- 上传区域 -->
+<div id="uploadArea">
+    <label class="upload-box" for="fileInput">
+        <p style="font-size:16px;color:#666;">点击上传图片（JPG/PNG/GIF）</p>
+        <p class="tip">存储在浏览器本地，清除缓存会丢失图片</p>
+    </label>
+    <input type="file" id="fileInput" accept="image/*">
+    <button class="green-btn clear-all" onclick="clearAllImg()">清空全部图库</button>
+    <div class="tip">说明：每张图片唯一ID = 上传时的时间戳，访问页面?id=ID 直接查看单图</div>
+</div>
+
+<!-- 图库列表 -->
+<h2 class="gallery-title">我的图库</h2>
+<div class="gallery-wrap" id="galleryBox"></div>
+
+<script>
+// 存储key
+const STORAGE_KEY = "localImageBedData";
+const pageName = "local-img-bed.html";
+
+// 获取url参数 id
+function getUrlParam(name){
+    const params = new URLSearchParams(location.search);
+    return params.get(name);
+}
+const targetId = getUrlParam('id');
+
+// 初始化页面
+initPage();
+
+function initPage(){
+    // 如果url带id，渲染单图预览
+    if(targetId){
+        showSingleImage(targetId);
+        return;
+    }
+    // 正常加载图库页面
+    renderGallery();
+}
+
+// 读取全部图片数据
+function getAllImages(){
+    const str = localStorage.getItem(STORAGE_KEY);
+    if(!str) return {};
+    return JSON.parse(str);
+}
+
+// 保存全部图片数据
+function saveAllImages(data){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// 上传图片监听
+const fileInput = document.getElementById('fileInput');
+fileInput.addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function(res){
+        // 生成时间戳ID
+        const imgId = Date.now().toString();
+        const imgBase64 = res.target.result;
+        // 存入对象
+        const allImg = getAllImages();
+        allImg[imgId] = imgBase64;
+        saveAllImages(allImg);
+        alert(`上传成功！图片ID：${imgId}`);
+        // 刷新图库
+        renderGallery();
+        // 清空选择框，可重复上传
+        fileInput.value = "";
+    }
+})
+
+// 渲染全部图库
+function renderGallery(){
+    const wrap = document.getElementById('galleryBox');
+    wrap.innerHTML = "";
+    const allImg = getAllImages();
+    const idList = Object.keys(allImg).reverse(); // 最新上传放最前
+    if(idList.length === 0){
+        wrap.innerHTML = '<p style="color:#999;">暂无上传图片</p>';
+        return;
+    }
+    idList.forEach(id=>{
+        const base64 = allImg[id];
+        const card = document.createElement('div');
+        card.className = "img-card";
+        const link = `${pageName}?id=${id}`;
+        card.innerHTML = `
+            <img src="${base64}" alt="${id}">
+            <div class="img-info">
+                <div class="id-text">ID:${id}</div>
+                <span class="copy-link" data-link="${link}">复制链接</span>
+                <button class="del-btn" data-id="${id}">删除</button>
+            </div>
+        `;
+        wrap.appendChild(card);
+    })
+
+    // 复制链接事件
+    document.querySelectorAll('.copy-link').forEach(item=>{
+        item.onclick = function(){
+            const link = this.dataset.link;
+            navigator.clipboard.writeText(link).then(()=>alert("链接已复制"));
+        }
+    })
+    // 删除单图
+    document.querySelectorAll('.del-btn').forEach(btn=>{
+        btn.onclick = function(){
+            const delId = this.dataset.id;
+            const allImg = getAllImages();
+            delete allImg[delId];
+            saveAllImages(allImg);
+            renderGallery();
+        }
+    })
+}
+
+// 清空所有图片
+function clearAllImg(){
+    if(!confirm("确定清空所有本地图片？无法恢复！")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    renderGallery();
+}
+
+// 单独展示一张图片（url?id=xxx）
+function showSingleImage(imgId){
+    const uploadArea = document.getElementById('uploadArea');
+    const galleryTitle = document.querySelector('.gallery-title');
+    const galleryBox = document.getElementById('galleryBox');
+    const singleView = document.getElementById('singleView');
+
+    // 隐藏图库，显示单图预览
+    uploadArea.style.display = "none";
+    galleryTitle.style.display = "none";
+    galleryBox.style.display = "none";
+    singleView.style.display = "block";
+
+    const allImg = getAllImages();
+    const imgBase64 = allImg[imgId];
+    const viewImg = document.getElementById('viewImg');
+    const viewId = document.getElementById('viewId');
+    const copyViewLink = document.getElementById('copyViewLink');
+    const link = `${pageName}?id=${imgId}`;
+
+    viewId.innerText = imgId;
+    copyViewLink.dataset.link = link;
+    copyViewLink.onclick = ()=>{
+        navigator.clipboard.writeText(link).then(()=>alert("链接复制成功"));
+    }
+
+    if(imgBase64){
+        viewImg.src = imgBase64;
+    }else{
+        viewImg.alt = "图片不存在或已删除";
+        viewImg.style.display = "none";
+        singleView.innerHTML += "<p style='color:red;'>该ID图片不存在，已被删除或浏览器缓存清空</p>";
+    }
+}
+</script>
+</body>
+</html>
